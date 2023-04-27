@@ -12,7 +12,6 @@ class Lexer(object):
         'else': 'ELSE',
         'while': 'WHILE',
         'for': 'FOR',
-        'int': 'INT',
         'float': 'FLOAT',
         'return': 'RETURN',
         'bool': 'BOOL',
@@ -78,26 +77,23 @@ class Lexer(object):
         t.lexer.skip(1)     # skip one character (this one)
 
 
+if __name__ == "__main__":          # so that code below isn't invoked if the module is imported.
+    ### Test the lexer
+    L = Lexer()
 
-### Test the lexer
-L = Lexer()
-
-code = \
-"""
-if else
-3 + 2
-# This is a comment!
-7 - 2 + 1
-1 + 1 / abc5!@!
-"""
-
-L.lexer.input(code)
-while True:
-    tok = L.lexer.token()       # get next token
-    if not tok:                 # no more tokens
-        break
-    print(tok)
-
-
-
+    code = \
+    """
+    if else
+    3 + 2
+    # This is a comment!
+    7 - 2 + 1
+    1 + 1 / abc5!@!
+    """
+    
+    L.lexer.input(code)
+    while True:
+        tok = L.lexer.token()       # get next token
+        if not tok:                 # no more tokens
+            break
+        print(tok)
 
