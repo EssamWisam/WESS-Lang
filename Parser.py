@@ -31,7 +31,7 @@ class Parser(object):
                   | RETURN_STATEMENT SEMICOLON
         '''
 
-  def p_declaration(self, p):
+  def p_declaration(self, p):# ENUM_VAR_DECLARATION is variable instantiation
     '''
         DECLARATION : VAR_DECLARATION
                     | CONST_DECLARATION
@@ -91,7 +91,7 @@ class Parser(object):
         FUNCTION_DECLARATION : FUNCTION IDENTIFIER LPAREN PARAMETER_LIST RPAREN BLOCK
         '''
 
-  def p_parameter_list(self, p):
+  def p_parameter_list(self, p): #TODO add epsilon
     '''
         PARAMETER_LIST : IDENTIFIER
                        | IDENTIFIER COMMA PARAMETER_LIST
@@ -131,7 +131,7 @@ class Parser(object):
                    | STRING
         '''
 
-  def p_logical_expr(self, p):  # (y<0) and (2*x+1>0)
+  def p_logical_expr(self, p):  # (y<0) and (2*x+1>0) or (x==0)
     '''
         LOGICAL_EXPR : COMPARISON_EXPR
                      | COMPARISON_EXPR BINARY_LOGICAL_OPERATOR LOGICAL_EXPR
@@ -139,19 +139,19 @@ class Parser(object):
                      | NOT COMPARISON_EXPR BINARY_LOGICAL_OPERATOR LOGICAL_EXPR
         '''
 
-  def p_comparison_expr(self, p):  # 2*x+1>0
+  def p_comparison_expr(self, p):  # 2*x+1<2*y+1
     '''
         COMPARISON_EXPR : ADDITIVE_EXPR
-                        | ADDITIVE_EXPR COMPARISON_OPERATOR COMPARISON_EXPR
+                        | ADDITIVE_EXPR COMPARISON_OPERATOR ADDITIVE_EXPR
         '''
 
-  def p_additive_expr(self, p):  # 2*x+1
+  def p_additive_expr(self, p):  # 5+2*x
     '''
         ADDITIVE_EXPR : MULTIPLICATIVE_EXPR
                       | MULTIPLICATIVE_EXPR ADDITIVE_OPERATOR ADDITIVE_EXPR
         '''
 
-  def p_multiplicative_expr(self, p):  # 2*x
+  def p_multiplicative_expr(self, p):  # x*2
     '''
         MULTIPLICATIVE_EXPR : TERM
                             | TERM MULTIPLICATIVE_OPERATOR MULTIPLICATIVE_EXPR
@@ -170,7 +170,7 @@ class Parser(object):
         FUNCTION_CALL : IDENTIFIER LPAREN ARGUMENT_LIST RPAREN
         '''
 
-  def p_argument_list(self, p):
+  def p_argument_list(self, p):# TODO add epsilon
     '''
         ARGUMENT_LIST : EXPRESSION
                       | EXPRESSION COMMA ARGUMENT_LIST
@@ -229,4 +229,3 @@ if (x*pi > 10) {
 """
 
   P.parser.parse(code)
-

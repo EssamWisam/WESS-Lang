@@ -79,7 +79,11 @@ class Lexer(object):
     # lineno(from lexer.lineno below), lexpos(position relative to the start of the input text)
     # all four are printed with each token when you run the file.
     # create an entry in the symbol table once the token is created and put the value in it
-    t.value = float(t.value)
+    # chenck for dot and if so, convert to float else int
+    if '.' in t.value:
+      t.value = float(t.value)
+    else:
+      t.value = int(t.value)
     return t
 
 
