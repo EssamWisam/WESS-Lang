@@ -1,0 +1,36 @@
+var x;
+x = 5;
+const pi = 3.14;
+if (x*pi > 10) {
+  x = "Hello";
+} else {
+  x = "World";
+}
+______________________________________
+function factorial(n) {
+  if (n == 1) {
+    return 1;
+  }
+  return n * factorial(n-1);
+}
+var x;
+x = factorial(5);
+______________________________________
+var i;
+var x;
+for (i = 1; i <= 10; i = i + 1) {
+  if (i / 2 == 0) {
+    x = i;
+  } else {
+    x = i + 1;
+  }
+}
+______________________________________
+enum Colors {
+  RED,
+  GREEN,
+  BLUE
+};
+enum Colors c;
+c = RED;
+______________________________________

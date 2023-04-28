@@ -14,42 +14,21 @@ class Lexer(object):
       'else': 'ELSE',
       'while': 'WHILE',
       'for': 'FOR',
+      'int': 'INT',
+      'float': 'FLOAT',
       'return': 'RETURN',
-      'and': 'AND',
-      'or': 'OR',
-      'not': 'NOT',
-      'function': 'FUNCTION',
-      'do': 'DO',
-      'const': 'CONST',
-      'enum': 'ENUM',
-      'switch': 'SWITCH',
-      'case': 'CASE',
-      'default': 'DEFAULT',
-      'var': 'VAR'
+      'bool': 'BOOL',
   }
 
   tokens = [
       'NUMBER',  # e.g., 234
-      'STRING',  # e.g., "hello world
-      'IDENTIFIER',  # Identifiers
+      'ID',  # Identifiers
       'PLUS',  # +
       'MINUS',  # -
       'TIMES',  # *
       'DIVIDE',  # /
       'LPAREN',  # (
       'RPAREN',  # )
-      'SEMICOLON',  # ;
-      'ASSIGN',  # =
-      'LBRACE',  # {
-      'RBRACE',  # }
-      'COMMA',  # ,
-      'COLON',  # :
-      'EQ',  # ==
-      'NE',  # !=
-      'LT',  # <
-      'LE',  # <=
-      'GT',  # >
-      'GE',  # >=
   ] + list(reserved.values())  # add reserved words to tokens list
 
   # All of these can be defined as functions like t_NUMBER below but we don't need to any actions so this works.
@@ -60,40 +39,22 @@ class Lexer(object):
   t_DIVIDE = r'/'
   t_LPAREN = r'\('
   t_RPAREN = r'\)'
-  t_SEMICOLON = r';'
-  t_ASSIGN = r'='
-  t_LBRACE = r'\{'
-  t_RBRACE = r'\}'
-  t_COMMA = r','
-  t_COLON = r':'
-  t_EQ = r'=='
-  t_NE = r'!='
-  t_LT = r'<'
-  t_LE = r'<='
-  t_GT = r'>'
-  t_GE = r'>='
 
   def t_NUMBER(self, t):
-    r'\d+(\.\d+)?'
+    r'[0-9]+'
     # recall, any token read is associated with type(NUMBER), value(assigned as matched string unless overridden here),
     # lineno(from lexer.lineno below), lexpos(position relative to the start of the input text)
     # all four are printed with each token when you run the file.
+
     # create an entry in the symbol table once the token is created and put the value in it
-    t.value = float(t.value)
+    t.value = int(t.value)
     return t
 
-
-
-  def t_IDENTIFIER(self, t):
+  def t_ID(self, t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = Lexer.reserved.get(
-        t.value, 'IDENTIFIER'
+        t.value, 'ID'
     )  # If its reserved (and found), it should rather take type of reserved word
-    return t
-
-  def t_STRING(self, t):
-    r'[\"\']([^\\\n]|(\\.))*?[\"\']'
-    t.value = t.value[1:-1]  # remove the quotes
     return t
 
   # A string containing ignored characters as strings
