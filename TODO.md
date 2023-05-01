@@ -4,7 +4,7 @@
 - add empty prantheses to function definitions
 - int (%, //) operators
 ## To be done (optional)
-- string operations
+- string operations 
 - better syntax (especially for enums)
 - bitwise operations
 - enum rules
