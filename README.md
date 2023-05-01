@@ -49,9 +49,10 @@ Let's get started!
 >> ```javascript
 >> var x = 5.5;
 >> ```
->> + #### Boolean (true or false)
+>> + #### Boolean (True or False)
 >> ```javascript
->> var x = true;
+>> var x = True;
+>> var y = False;
 >> ```
 >> + #### String
 >> ```javascript
@@ -208,22 +209,58 @@ Let's get started!
 >> ```C++
 >> switch (expression) {
 >>   case value1:
->>     // code
+>>     // statements
 >>     break;
 >>   case value2:
->>     // code
+>>     // statements
 >>     break;
 >>   default:
->>     // code
+>>     // statements
 >> }
 >> ```
 
+### Functions:
+```javascript
+function functionName(parameter1, parameter2, ...) {
+  // code
+  return expression;
+}
+```
+
+### Blocks:
+```javascript
+{
+  // code
+}
+```
 
 
-## Examples
+## Samples:
+```javascript
+var i;
+var x;
+for (i = 1; i <= 10; i = i + 1) {
+  if (i / 2 == 0) {
+    x = i;
+  } else {
+    x = i + 1;
+  }
+}
+```
+
+```javascript
+function factorial(n) {
+  if (n == 1) {
+    return 1;
+  }
+  return n * factorial(n-1);
+}
+var x;
+x = factorial(5);
+```
 
 ## Contrinutors
-
-## License
-
-## Essam
+- Ahmed Waleed
+- Essam Wisam
+- Mohamed Saad
+- Mohamed Salama
