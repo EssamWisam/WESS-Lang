@@ -87,7 +87,7 @@ if __name__ == "__main__":  # so that code below isn't invoked if the module is 
     3 + 2
     # This is a comment!
     7 - 2 + 1
-    1 + 1 / abc5!@!
+    1 + 1 
     """
 
   L.lexer.input(code)
@@ -95,4 +95,4 @@ if __name__ == "__main__":  # so that code below isn't invoked if the module is 
     tok = L.lexer.token()  # get next token
     if not tok:  # no more tokens
       break
-    print(tok)
+    #print(tok)
