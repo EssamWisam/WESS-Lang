@@ -23,7 +23,7 @@ git clone https://github.com/EssamWisam/WESS-Lang
 ## How to use (For Phase 1):
 write your code in `code.txt` file, then run parser.py:
 ```bash
-python parser.py
+python Parser.py
 ```
 
 ## Language Features & Syntax:
