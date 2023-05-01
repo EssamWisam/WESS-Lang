@@ -163,6 +163,8 @@ class Parser(object):
              | NUMBER
              | FUNCTION_CALL
              | LPAREN EXPRESSION RPAREN
+             | TRUE
+             | FALSE
         '''
 
   def p_function_call(self, p):
