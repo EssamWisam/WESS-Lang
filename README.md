@@ -3,8 +3,6 @@
 WESS is a C-like programming language that is designed to be easy to learn and use. Also it must be your first choice if you want to hack NASA.
 
 ## Table of Contents:
-- [WESS Programming Language](#wess-programming-language)
-  - [Table of Contents:](#table-of-contents)
   - [Installation:](#installation)
   - [How to use (For Phase 1):](#how-to-use-for-phase-1)
   - [Language Features \& Syntax:](#language-features--syntax)
@@ -97,6 +95,8 @@ Let's get started!
 >> | `-` | Subtraction |
 >> | `*` | Multiplication |
 >> | `/` | Division |
+>> | `//` | Integer Division |
+>> | `%` | Modulus |
 >> | `()` | Parenthesis |
 >> #### Examples:
 >> ```javascript
