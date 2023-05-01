@@ -97,18 +97,37 @@ class Parser(object):
                        | IDENTIFIER COMMA PARAMETER_LIST
                        | epsilon
         '''
-
+  def p_block_statement(self, p):
+    '''
+        BLOCK_STATEMENT : STATEMENT
+                        | CONTINUE_STATEMENT
+                        | BREAK_STATEMENT
+        '''
+  def p_block_statement_list(self, p):
+    '''
+        BLOCK_STATEMENT_LIST : BLOCK_STATEMENT
+                             | BLOCK_STATEMENT BLOCK_STATEMENT_LIST
+        '''
   def p_block(self, p):
     '''
-        BLOCK : LBRACE STATEMENT_LIST RBRACE
+        BLOCK : LBRACE BLOCK_STATEMENT_LIST RBRACE
               | LBRACE RBRACE
         '''
-
+  # def p_loop_statement(self, p):
+  #   '''
+  #       LOOP_STATEMENT : STATEMENT
+  #                       | CONTINUE
+  #                       | BREAK
+  #       '''
+  # def p_loop_statement_list(self, p):
+  #   '''
+  #       LOOP_STATEMENT_LIST : LOOP_STATEMENT
+  #                           | LOOP_STATEMENT LOOP_STATEMENT_LIST
+  #       '''
+    
   # def p_loop_block(self, p):
   #   '''
-  #       LOOP_BLOCK : LBRACE STATEMENT_LIST CONTINUE_STATEMENT RBRACE
-  #                  | LBRACE STATEMENT_LIST BREAK_STATEMENT RBRACE
-  #                  | LBRACE STATEMENT_LIST CONTINUE_STATEMENT BREAK_STATEMENT RBRACE
+  #       LOOP_BLOCK : LBRACE LOOP_STATEMENT_LIST RBRACE
   #                  | LBRACE RBRACE
   #       '''
 
@@ -219,7 +238,15 @@ class Parser(object):
         MULTIPLICATIVE_OPERATOR : TIMES
                                 | DIVIDE
         '''
-
+  def p_continue_statement(self, p):
+    '''
+        CONTINUE_STATEMENT : CONTINUE SEMICOLON
+        '''
+  def p_break_statement(self, p):
+    '''
+        BREAK_STATEMENT : BREAK SEMICOLON
+        '''
+    
 
   def p_error(self, p):
     print("Syntax error in input!")
