@@ -32,17 +32,17 @@ Also WESS is a case-sensitive language, so `x` and `X` are two different variabl
 
 Let's get started!
 
-> ### Comments:
->> To add a comment, use `//` for single line comments.
->> ```C++
->> // This is a comment
+> ### :
+>> To add a comment, use '#' for single line comments.
+>> ```python
+>> # This is a comment
 >> ```
 
 > ### Data Types:
 >> + #### Integer:
 >> ```javascript
 >> var x = 5;
->> var y = -99 - 1;  // y = -100
+>> var y = -99 - 1;  # y = -100
 >> ```
 >> + #### Float
 >> ```javascript
@@ -84,7 +84,7 @@ Let's get started!
 >> }
 >> ```
 >> ```javascript
->> var color = RED; // Notice how it's different from C.
+>> var color = RED;
 >> ```
 
 > ### Operators:
@@ -127,7 +127,7 @@ Let's get started!
 >> | `<=` | Less than or equal to |
 >> #### Examples:
 >> ```javascript
->> var x = 3 > 5; // x = false
+>> var x = 3 > 5; 
 >> ```
 
 >> #### Logical Operators:
@@ -139,17 +139,17 @@ Let's get started!
 >> #### Examples:
 >> ```javascript
 >> var x = 10 >= 5;
->> var y = x and (7 != 8); // x = true
+>> var y = x and (7 != 8); 
 >> ```
 >> ```javascript
->> var x = true or false; // x = true
+>> var x = true or false; 
 >> ```
 
 >> #### Expressions:
 >> There are two types of expressions:
 >>> + #### Arithmetic Expressions:
 >>> ```javascript
->>> (5 + 1) / 3; // x = 2.0
+>>> (5 + 1) / 3; 
 >>> ```
 
 >>> + #### Logical Expressions:
@@ -162,16 +162,16 @@ Let's get started!
 >> #### If Statement:
 >> ```javascript
 >> if (expression) {
->>   // code
+>>   # code
 >> }
 >> ```
 
 >> #### If-Else Statement:
 >> ```javascript
 >> if (expression) {
->>   // code
+>>   # code
 >> } else {
->>   // code
+>>   # code
 >> }
 >> ```
 
@@ -179,27 +179,27 @@ Let's get started!
 >>> ##### While Loop:
 >>> ```javascript
 >>> while (expression) {
->>>   // code
+>>>   # code
 >>> }
 >>> ```
 
 >>> ##### do-While Loop:
 >>> ```javascript
 >>> do {
->>>   // code
+>>>   # code
 >>> } while (expression);
 >>> ```
 
 >>> ##### For Loop:
 >>> ```javascript
 >>> for (initialization; condition; increment) {
->>>   // code
+>>>   # code
 >>> }
 >>> ```
 >>> ###### Examples:
 >>> ```javascript
 >>> for (var i = 0; i < 10; i = i + 1) {
->>>   // code
+>>>   # code
 >>> }
 >>> ```
 
@@ -207,20 +207,20 @@ Let's get started!
 >> ```C++
 >> switch (expression) {
 >>   case value1:
->>     // statements
+>>     # statements
 >>     break;
 >>   case value2:
->>     // statements
+>>     # statements
 >>     break;
 >>   default:
->>     // statements
+>>     # statements
 >> }
 >> ```
 
 ### Functions:
 ```javascript
 function functionName(parameter1, parameter2, ...) {
-  // code
+  # code
   return expression;
 }
 ```
@@ -228,7 +228,7 @@ function functionName(parameter1, parameter2, ...) {
 ### Blocks:
 ```javascript
 {
-  // code
+  # code
 }
 ```
 
