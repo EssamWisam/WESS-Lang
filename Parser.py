@@ -95,8 +95,8 @@ class Parser(object):
     '''
         PARAMETER_LIST : IDENTIFIER
                        | IDENTIFIER COMMA PARAMETER_LIST
+                       | epsilon
         '''
-    pass
 
   def p_block(self, p):
     '''
@@ -180,13 +180,17 @@ class Parser(object):
     '''
         FUNCTION_CALL : IDENTIFIER LPAREN ARGUMENT_LIST RPAREN
         '''
-
+  def p_epsilon(self, p):
+    '''
+        epsilon :
+        '''
+    
   def p_argument_list(self, p):# TODO add epsilon
     '''
         ARGUMENT_LIST : EXPRESSION
                       | EXPRESSION COMMA ARGUMENT_LIST
+                      | epsilon
         '''
-    pass
 
   def p_logical_operator(self, p):
     '''
