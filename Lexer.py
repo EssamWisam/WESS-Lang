@@ -26,6 +26,10 @@ class Lexer(object):
       'case': 'CASE',
       'default': 'DEFAULT',
       'var': 'VAR',
+      'break': 'BREAK',
+      'continue': 'CONTINUE',
+      'True': 'TRUE',
+      'False': 'FALSE',
   }
 
   tokens = [
@@ -50,8 +54,6 @@ class Lexer(object):
       'LE',  # <=
       'GT',  # >
       'GE',  # >=
-      'TRUE',  # true
-      'FALSE',  # false
   ] + list(reserved.values())  # add reserved words to tokens list
 
   # All of these can be defined as functions like t_NUMBER below but we don't need to any actions so this works.
@@ -74,8 +76,8 @@ class Lexer(object):
   t_LE = r'<='
   t_GT = r'>'
   t_GE = r'>='
-  t_TRUE = r'True'
-  t_FALSE = r'False'
+  # t_TRUE = r'True'
+  # t_FALSE = r'False'
 
 
   def t_NUMBER(self, t):
@@ -108,8 +110,8 @@ class Lexer(object):
   # A string containing ignored characters as strings
   t_ignore = ' ' + '\t'
 
-  def t_COMMENT(self, t):
-    r'\#.*'
+  def t_COMMENT(self, t): # //
+    r'//.*'
     pass  # in other words, discard.
 
   ### Now each token has a rule

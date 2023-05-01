@@ -34,3 +34,14 @@ enum Colors {
 enum Colors c;
 c = RED;
 ______________________________________
+var x;
+var h = (x>y) or True;
+var num = -.2;
+x = 5;
+const pi = 3.14;
+if (x*pi > 10) {
+  x = "Hello";
+} else {
+  x = "World";
+}
+______________________________________

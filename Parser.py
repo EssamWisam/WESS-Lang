@@ -96,12 +96,21 @@ class Parser(object):
         PARAMETER_LIST : IDENTIFIER
                        | IDENTIFIER COMMA PARAMETER_LIST
         '''
+    pass
 
   def p_block(self, p):
     '''
         BLOCK : LBRACE STATEMENT_LIST RBRACE
               | LBRACE RBRACE
         '''
+
+  # def p_loop_block(self, p):
+  #   '''
+  #       LOOP_BLOCK : LBRACE STATEMENT_LIST CONTINUE_STATEMENT RBRACE
+  #                  | LBRACE STATEMENT_LIST BREAK_STATEMENT RBRACE
+  #                  | LBRACE STATEMENT_LIST CONTINUE_STATEMENT BREAK_STATEMENT RBRACE
+  #                  | LBRACE RBRACE
+  #       '''
 
   def p_return_statement(self, p):
     '''
@@ -177,6 +186,7 @@ class Parser(object):
         ARGUMENT_LIST : EXPRESSION
                       | EXPRESSION COMMA ARGUMENT_LIST
         '''
+    pass
 
   def p_logical_operator(self, p):
     '''
@@ -206,8 +216,10 @@ class Parser(object):
                                 | DIVIDE
         '''
 
+
   def p_error(self, p):
     print("Syntax error in input!")
+    #print(p)
 
   def __init__(self):
     self.lexer = Lexer()
