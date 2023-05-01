@@ -218,7 +218,12 @@ class Parser(object):
     '''
         MULTIPLICATIVE_OPERATOR : TIMES
                                 | DIVIDE
+                                | MOD
+                                | INT_DIVIDE
         '''
+    
+    # if the previous toke is a float and the current toke is MOD or INT_DIVIDE then raise an error (TODO:)
+    
 
 
   def p_error(self, p):
