@@ -9,7 +9,6 @@ WESS is a C-like programming language that is designed to be easy to learn and u
   - [Examples](#examples)
   - [Contrinutors](#contrinutors)
   - [License](#license)
-  - [Essam](#essam)
 
 ## Installation:
 install ply:
@@ -129,7 +128,6 @@ Let's get started!
 >> #### Examples:
 >> ```javascript
 >> var x = 3 > 5; // x = false
->> var y = "WESS is awesome!" == "WESS is awesome!"; // y = true
 >> ```
 
 >> #### Logical Operators:
@@ -264,3 +262,6 @@ x = factorial(5);
 - Essam Wisam
 - Mohamed Saad
 - Mohamed Salama
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
