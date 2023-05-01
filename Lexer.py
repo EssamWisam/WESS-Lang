@@ -25,7 +25,7 @@ class Lexer(object):
       'switch': 'SWITCH',
       'case': 'CASE',
       'default': 'DEFAULT',
-      'var': 'VAR'
+      'var': 'VAR',
   }
 
   tokens = [
@@ -50,6 +50,8 @@ class Lexer(object):
       'LE',  # <=
       'GT',  # >
       'GE',  # >=
+      'TRUE',  # true
+      'FALSE',  # false
   ] + list(reserved.values())  # add reserved words to tokens list
 
   # All of these can be defined as functions like t_NUMBER below but we don't need to any actions so this works.
@@ -72,9 +74,12 @@ class Lexer(object):
   t_LE = r'<='
   t_GT = r'>'
   t_GE = r'>='
+  t_TRUE = r'True'
+  t_FALSE = r'False'
+
 
   def t_NUMBER(self, t):
-    r'\d+(\.\d+)?'
+    r'(-?\d+(\.\d+)?)|(-?\.\d+)'
     # recall, any token read is associated with type(NUMBER), value(assigned as matched string unless overridden here),
     # lineno(from lexer.lineno below), lexpos(position relative to the start of the input text)
     # all four are printed with each token when you run the file.

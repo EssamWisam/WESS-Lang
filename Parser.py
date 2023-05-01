@@ -163,6 +163,8 @@ class Parser(object):
              | NUMBER
              | FUNCTION_CALL
              | LPAREN EXPRESSION RPAREN
+             | TRUE
+             | FALSE
         '''
 
   def p_function_call(self, p):
@@ -216,16 +218,24 @@ if __name__ == "__main__":
   ### Test the parser
   P = Parser()
 
-  code = \
-"""
-var x;
-x = 5;
-const pi = 3.14;
-if (x*pi > 10) {
-  x = "Hello";
-} else {
-  x = "World";
-}
-"""
+#   code = \
+# """
+# var x;
+# x = 5;
+# const pi = 3.14;
+# if (x*pi > 10) {
+#   x = "Hello";
+# } else {
+#   x = "World";
+# }
+# """
+  # get the code from the code.txt file
+  with open("code.txt", "r") as f:
+    code = f.read()
 
-  P.parser.parse(code)
+  parse = P.parser.parse(code)
+
+  # print(parse)
+  # if parse is not None:
+  #   print("Parsing Successful!")
+
