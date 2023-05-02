@@ -123,9 +123,6 @@ TODO: To be adopted
 >> var x = 5;
 >> x = 10;
 >> ```
->> ```javascript
->> x = y = z = 23;
->> ```
 
 >> #### Comparison Operators:
 >> | Operator | Description |

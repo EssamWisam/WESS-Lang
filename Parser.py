@@ -29,6 +29,8 @@ class Parser(object):
                   | BLOCK
                   | SWITCH_STATEMENT
                   | RETURN_STATEMENT SEMICOLON
+                  | CONTINUE_STATEMENT
+                  | BREAK_STATEMENT
         '''
 
   def p_declaration(self, p):# ENUM_VAR_DECLARATION is variable instantiation
@@ -97,20 +99,20 @@ class Parser(object):
                        | IDENTIFIER COMMA PARAMETER_LIST
                        | epsilon
         '''
-  def p_block_statement(self, p):
-    '''
-        BLOCK_STATEMENT : STATEMENT
-                        | CONTINUE_STATEMENT
-                        | BREAK_STATEMENT
-        '''
-  def p_block_statement_list(self, p):
-    '''
-        BLOCK_STATEMENT_LIST : BLOCK_STATEMENT
-                             | BLOCK_STATEMENT BLOCK_STATEMENT_LIST
-        '''
+  # def p_block_statement(self, p):
+  #   '''
+  #       BLOCK_STATEMENT : STATEMENT
+  #                       | CONTINUE_STATEMENT
+  #                       | BREAK_STATEMENT
+  #       '''
+  # def p_block_statement_list(self, p):
+  #   '''
+  #       BLOCK_STATEMENT_LIST : BLOCK_STATEMENT
+  #                            | BLOCK_STATEMENT BLOCK_STATEMENT_LIST
+  #       '''
   def p_block(self, p):
     '''
-        BLOCK : LBRACE BLOCK_STATEMENT_LIST RBRACE
+        BLOCK : LBRACE STATEMENT_LIST RBRACE
               | LBRACE RBRACE
         '''
   # def p_loop_statement(self, p):
@@ -249,6 +251,10 @@ class Parser(object):
         BREAK_STATEMENT : BREAK SEMICOLON
         '''
     
+    
+    # if the previous toke is a float and the current toke is MOD or INT_DIVIDE then raise an error (TODO:)
+    
+
 
   def p_error(self, p):
     print("Syntax error in input!")
