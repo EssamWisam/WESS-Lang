@@ -184,6 +184,7 @@ class Parser(object):
   def p_multiplicative_expr(self, p):  # x*2
     '''
         MULTIPLICATIVE_EXPR : TERM
+                            | MINUS TERM
                             | TERM MULTIPLICATIVE_OPERATOR MULTIPLICATIVE_EXPR
         '''
 

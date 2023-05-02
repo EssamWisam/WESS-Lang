@@ -1,2 +1,73 @@
-True or False;
-5 > 6;
+var x;
+x = 5;
+const pi = 3.14;
+if (x*pi > 10) {
+  x = "Hello";
+} else {
+  x = "World";
+}
+#______________________________________
+function factorial(n) {
+  if (n == 1) {
+    return 1;
+  }
+  return n * factorial(n-1);
+}
+var x;
+x = factorial(5);
+#______________________________________
+var i;
+var x;
+for (i = 1; i <= 10; i = i + 1) {
+  if (i / 2 == 0) {
+    x = i;
+  } else {
+    x = i + 1;
+  }
+}
+#______________________________________
+enum Colors {
+  RED,
+  GREEN,
+  BLUE
+};
+enum Colors c;
+c = RED;
+#______________________________________
+var x;
+var h = (x>y) or True;
+var num = -.2;
+x = 5;
+const pi = 3.14;
+if (x*pi > 10) {
+  x = "Hello";
+} else {
+  x = "World";
+}
+#______________________________________
+var x = 1;
+var y = 1.1;
+var z = .1;
+var q = -1;
+var h = -1.1;
+var l = -.1;
+var p = y-1;
+var x=-1;
+var y=2/-1;
+var f = x+-1.5;
+var g=1%-1;
+var h=1--1;
+#______________________________________
+
+var i;
+var x;
+for (i = 1; i <= 10; i = i + 1) {
+  if (i / 2 == 0) {
+    x = i;
+  } else {
+    x = i + 1;
+    break;
+  }
+  break;
+}
+#______________________________________
