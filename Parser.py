@@ -240,7 +240,6 @@ class Parser(object):
                                 | MOD
                                 | INT_DIVIDE
         '''
-<<<<<<< HEAD
   def p_continue_statement(self, p):
     '''
         CONTINUE_STATEMENT : CONTINUE SEMICOLON
@@ -250,12 +249,6 @@ class Parser(object):
         BREAK_STATEMENT : BREAK SEMICOLON
         '''
     
-=======
-    
-    # if the previous toke is a float and the current toke is MOD or INT_DIVIDE then raise an error (TODO:)
-    
-
->>>>>>> 7298bd65b983cd6aa2e2a58df47d3f8e62374d28
 
   def p_error(self, p):
     print("Syntax error in input!")

@@ -1,12 +1,1 @@
-var x = 1;
-var y = 1.1;
-var z = .1;
-var q = -1;
-var h = -1.1;
-var l = -.1;
-var p = y-1;
-var x=-1;
-var y=2/-1;
-var f = x+-1.5;
-var g=1%-1;
-var h=1--1;
+True or False;
