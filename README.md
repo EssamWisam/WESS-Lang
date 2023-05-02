@@ -25,6 +25,7 @@ write your code in `code.txt` file, then run parser.py:
 ```bash
 python Parser.py
 ```
+If there is no syntax error messages, your code is parsed successfully. (For Phase one)
 
 ## Language Features & Syntax:
 The language has syntax similar to C with some differences. The main difference is that WESS is a dynamic language, so you don't need to declare the type of the variable.
