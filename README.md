@@ -32,7 +32,7 @@ Also WESS is a case-sensitive language, so `x` and `X` are two different variabl
 
 Let's get started!
 
-> ### :
+> ### Comments:
 >> To add a comment, use '#' for single line comments.
 >> ```python
 >> # This is a comment
