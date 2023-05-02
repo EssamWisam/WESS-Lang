@@ -84,19 +84,7 @@ Let's get started!
 >> };
 >> enum Colors c;
 >> c = RED;
-```
-[//]:< 
-TODO: To be adopted
-```javascript
- enum Color {
-   RED,
-   GREEN,
-   BLUE
- }
- ```
- ```javascript
- var color = RED;
- ```>
+>> ```
 
 > ### Operators:
 >> #### Arithmetic Operators:
