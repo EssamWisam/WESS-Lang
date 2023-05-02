@@ -7,8 +7,8 @@ WESS is a C-like programming language that is designed to be easy to learn and u
   - [How to use (For Phase 1):](#how-to-use-for-phase-1)
   - [Language Features \& Syntax:](#language-features--syntax)
   - [Samples:](#samples)
-  - [Contrinutors](#contrinutors)
-  - [License](#license)
+  - [Contrinutors:](#contrinutors)
+  - [License:](#license)
 
 ## Installation:
 install ply:
