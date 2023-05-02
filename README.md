@@ -3,10 +3,14 @@
 WESS is a C-like programming language that is designed to be easy to learn and use. Also it must be your first choice if you want to hack NASA.
 
 ## Table of Contents:
+- [WESS Programming Language](#wess-programming-language)
+  - [Table of Contents:](#table-of-contents)
   - [Installation:](#installation)
   - [How to use (For Phase 1):](#how-to-use-for-phase-1)
   - [Language Features \& Syntax:](#language-features--syntax)
-  - [Examples](#examples)
+    - [Functions:](#functions)
+    - [Blocks:](#blocks)
+  - [Samples:](#samples)
   - [Contrinutors](#contrinutors)
   - [License](#license)
 
@@ -27,7 +31,7 @@ python Parser.py
 ```
 
 ## Language Features & Syntax:
-The language is almost like C, but with some differences (**will be highlighted if any**). The main difference is that WESS is a dynamic language, so you don't need to declare the type of the variable.
+The language has syntax similar to C with some differences. The main difference is that WESS is a dynamic language, so you don't need to declare the type of the variable.
 Also WESS is a case-sensitive language, so `x` and `X` are two different variables.
 
 Let's get started!
@@ -142,7 +146,7 @@ Let's get started!
 >> var y = x and (7 != 8); 
 >> ```
 >> ```javascript
->> var x = true or false; 
+>> var x = True or False; 
 >> ```
 
 >> #### Expressions:
@@ -154,8 +158,8 @@ Let's get started!
 
 >>> + #### Logical Expressions:
 >>> ```javascript
->>> true or false;
->>> (x and true) or false;
+>>> True or False;
+>>> (x and True) or False;
 >>> ```
 
 > ### Conditional Statements:
