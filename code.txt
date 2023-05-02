@@ -1,2 +1,8 @@
-var x = 1 % 2;
-# he he
+var x;
+x = 5;
+const pi = 3.14;
+if (x*pi > 10) {
+  x = "Hello";
+} else {
+  x = "World";
+}

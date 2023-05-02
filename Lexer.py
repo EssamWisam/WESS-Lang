@@ -85,7 +85,7 @@ class Lexer(object):
 
 
   def t_NUMBER(self, t):
-    r'(-?\d+(\.\d+)?)|(-?\.\d+)'
+    r'((?<=\s)-)?(\d+(\.\d+)?)|((?<=\s)-)?(\d*(\.\d+))'
     # recall, any token read is associated with type(NUMBER), value(assigned as matched string unless overridden here),
     # lineno(from lexer.lineno below), lexpos(position relative to the start of the input text)
     # all four are printed with each token when you run the file.
