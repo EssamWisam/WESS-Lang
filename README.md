@@ -146,7 +146,7 @@ Let's get started!
 >> var y = x and (7 != 8); 
 >> ```
 >> ```javascript
->> var x = true or false; 
+>> var x = True or False; 
 >> ```
 
 >> #### Expressions:
