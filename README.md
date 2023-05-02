@@ -77,15 +77,26 @@ Let's get started!
 
 > ### Enum:
 >> ```javascript
->> enum Color {
+>> enum Colors {
 >>   RED,
 >>   GREEN,
 >>   BLUE
->> }
->> ```
->> ```javascript
->> var color = RED;
->> ```
+>> };
+>> enum Colors c;
+>> c = RED;
+```
+[//]:< 
+TODO: To be adopted
+```javascript
+ enum Color {
+   RED,
+   GREEN,
+   BLUE
+ }
+ ```
+ ```javascript
+ var color = RED;
+ ```>
 
 > ### Operators:
 >> #### Arithmetic Operators:
