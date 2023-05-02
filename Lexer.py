@@ -40,6 +40,8 @@ class Lexer(object):
       'MINUS',  # -
       'TIMES',  # *
       'DIVIDE',  # /
+      'INT_DIVIDE',  # //
+      'MOD',  # %
       'LPAREN',  # (
       'RPAREN',  # )
       'SEMICOLON',  # ;
@@ -62,6 +64,8 @@ class Lexer(object):
   t_MINUS = r'-'
   t_TIMES = r'\*'
   t_DIVIDE = r'/'
+  t_INT_DIVIDE = r'//'
+  t_MOD = r'%'
   t_LPAREN = r'\('
   t_RPAREN = r'\)'
   t_SEMICOLON = r';'
@@ -111,7 +115,7 @@ class Lexer(object):
   t_ignore = ' ' + '\t'
 
   def t_COMMENT(self, t): # //
-    r'//.*'
+    r'\#.*'
     pass  # in other words, discard.
 
   ### Now each token has a rule
