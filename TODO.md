@@ -1,7 +1,7 @@
 # WESS-Lang
 ## To be done (necessary)
-- add empty prantheses to function calls [DONE??]
-- add empty prantheses to function definitions [DONE??]
+- add empty prantheses to function calls [DONE]
+- add empty prantheses to function definitions [DONE]
 - int (%, //) operators [DONE]
 - change the syntax of the enum 
 ## To be done (optional)
