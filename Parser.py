@@ -17,6 +17,10 @@ CONST -> name, line, type, value
 FUNC  -> name, line, type, params
 
 ENUM_DECLARATION  -> name, line, params (list of values that the enum can take)
+
+ENUM_MEMBER -> name, enum (enum symbol)
+
+CASE  -> line, type
 '''
 '''
 EXPRESSION -> type, value
@@ -102,14 +106,14 @@ class Parser(object):
       symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(2)}
       current_table.insert_symbol(Symbol(symbol_info))
     if len(p) == 5:
-      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(2), 'type': p[4].type, 'value': p[4].value}
+      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(2), 'type': p[4].type}
       current_table.insert_symbol(Symbol(symbol_info))
 
   def p_const_declaration(self, p):
     '''
         CONST_DECLARATION : CONST IDENTIFIER ASSIGN EXPRESSION
         '''
-    symbol_info = {'kind': 'CONST', 'name': p[2], 'type': p[4].type, 'value': p[4].value, 'line': p.lineno(2)}
+    symbol_info = {'kind': 'CONST', 'name': p[2], 'type': p[4].type, 'line': p.lineno(2)}
     current_table.insert_symbol(Symbol(symbol_info))
 
   def p_enum_declaration(self, p):
@@ -118,6 +122,9 @@ class Parser(object):
         '''
     symbol_info = {'kind': 'ENUM_DECLARATION', 'name': p[2], 'params': p[4], 'line': p.lineno(2)}
     current_table.insert_symbol(Symbol(symbol_info))
+    for param in p[4]:
+      symbol_info = {'kind': 'ENUM_MEMBER', 'type': p[2], 'name': param, 'line': p.lineno(2)}
+      current_table.insert_symbol(Symbol(symbol_info))
 
   def p_enum_member_list(self, p):
     '''
@@ -133,18 +140,17 @@ class Parser(object):
 
   def p_enum_var_declaration(self, p):
     '''
-        ENUM_VAR_DECLARATION : ENUM IDENTIFIER IDENTIFIER ASSIGN IDENTIFIER
-                             | ENUM IDENTIFIER IDENTIFIER
+        ENUM_VAR_DECLARATION : IDENTIFIER IDENTIFIER ASSIGN IDENTIFIER
+                             | IDENTIFIER IDENTIFIER
         '''
-    if len(p) == 6:
-      enum_symbol = current_table.lookup_symbol(p[2], p.lineno(2))
-      if p[5] not in enum_symbol.params:
-        raise Exception(f"Enum value not found, at line {p.lineno(5)}")
-      symbol_info = {'name': p[3], 'kind': 'VAR', 'type': 'INT', 'value': enum_symbol.params.index(p[5]), 'line': p.lineno(3)}
+    enum_symbol = current_table.lookup_symbol(p[1], p.lineno(1))
+    if len(p) == 5:
+      if p[4] not in enum_symbol.params:
+        raise Exception(f"Enum value not found, at line {p.lineno(4)}")
+      symbol_info = {'name': p[2], 'kind': 'VAR', 'type': p[1], 'line': p.lineno(2)}
       current_table.insert_symbol(Symbol(symbol_info))
-    if len(p) == 4:
-      enum_symbol = current_table.lookup_symbol(p[2], p.lineno(2))
-      symbol_info = {'name': p[2], 'kind': 'VAR', 'type': 'INT', 'enum': enum_symbol, 'line': p.lineno(3)}
+    if len(p) == 3:
+      symbol_info = {'name': p[2], 'kind': 'VAR', 'type': p[1], 'line': p.lineno(2)}
       current_table.insert_symbol(Symbol(symbol_info))
 
   def p_assignment(self, p):
@@ -158,14 +164,13 @@ class Parser(object):
       raise Exception(f"Type mismatch, at line {p.lineno(1)}")
     if not symbol.type:
       symbol.type = p[3].type
-    symbol.value = p[3].value
 
   def p_if_statement(self, p):
     '''
         IF_STATEMENT : IF NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK
                      | IF NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK ELSE NEW_SCOPE BLOCK
         '''
-    if p[4].type != 'BOOL':
+    if p[4].type != 'BOOL' and p[4].type != 'UNK':
       raise Exception(f"Type mismatch, at line {p.lineno(4)}")
 
   def p_loop(self, p):
@@ -175,18 +180,18 @@ class Parser(object):
              | FOR NEW_SCOPE LPAREN VAR_DECLARATION SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
              | DO NEW_SCOPE BLOCK WHILE LPAREN EXPRESSION RPAREN SEMICOLON
         '''
-    if len(p) == 7 and p[4].type != 'BOOL':
+    if len(p) == 7 and p[4].type != 'BOOL' and p[4].type != 'UNK':
       raise Exception(f"Type mismatch, at line {p.lineno(4)}")
-    if len(p) == 11  and p[6].type != 'BOOL':
+    if len(p) == 11  and p[6].type != 'BOOL' and p[6].type != 'UNK':
       raise Exception(f"Type mismatch, at line {p.lineno(6)}")
-    if len(p) == 9 and p[6].type != 'BOOL':
+    if len(p) == 9 and p[6].type != 'BOOL' and p[6].type != 'UNK':
       raise Exception(f"Type mismatch, at line {p.lineno(6)}")
 
   def p_function_declaration(self, p):
     '''
         FUNCTION_DECLARATION : FUNCTION NEW_SCOPE IDENTIFIER LPAREN PARAMETER_LIST RPAREN BLOCK
         '''
-    symbol_info = {'name': p[3], 'kind': 'FUNCTION', 'type': None, 'params': p[5], 'line': p.lineno(3)}
+    symbol_info = {'name': p[3], 'kind': 'FUNCTION', 'type': 'UNK', 'params': p[5], 'line': p.lineno(3)}
     current_table.insert_symbol(Symbol(symbol_info))
 
   def p_parameter_list(self, p):
@@ -195,13 +200,13 @@ class Parser(object):
                        | IDENTIFIER COMMA PARAMETER_LIST
                        | epsilon
         '''
-    if len(p) == 2 and p[1] != None: # TODO: not sure !epsilon
+    if len(p) == 2 and p[1] != None:
         p[0] = [p[1]]
-        symbol_info = {'name': p[1], 'kind': 'VAR', 'type': None, 'value': None, 'line': p.lineno(1)}
+        symbol_info = {'name': p[1], 'kind': 'VAR', 'line': p.lineno(1)}
         current_table.insert_symbol(Symbol(symbol_info))
     if len(p) == 4:
         p[0] = [p[1]] + p[3]
-    if len(p) == 2 and p[1] == None: # TODO: not sure epsilon
+    if len(p) == 2 and p[1] == None:
         p[0] = []
 
   def p_block(self, p):
@@ -213,7 +218,7 @@ class Parser(object):
 
   def p_new_scope(p):# Dummy rule for creating a new scope semantic action
     '''
-        NEW_SCOPE : 
+        NEW_SCOPE :
     '''
     current_table = current_table.create_child()
 
@@ -224,26 +229,41 @@ class Parser(object):
 
   def p_switch_statement(self, p):
     '''
-        SWITCH_STATEMENT : SWITCH LPAREN EXPRESSION RPAREN LBRACE CASE_LIST RBRACE
+        SWITCH_STATEMENT : SWITCH LPAREN EXPRESSION NEW_SCOPE RPAREN LBRACE CASE_LIST RBRACE
         '''
+    for case in p[7]:
+      if case.kind == 'CASE' and p[3].type!= 'UNK' and case.type != p[3].type:
+        raise Exception(f"Type mismatch, at line {case.line}")
 
   def p_case_list(self, p):
     '''
         CASE_LIST : CASE_CLAUSE
                   | CASE_CLAUSE CASE_LIST
       '''
+    if len(p) == 2:
+      p[0] = [p[1]]
+    if len(p) == 3:
+      p[0] = [p[1]] + p[2]
 
   def p_case_clause(self, p):
     '''
         CASE_CLAUSE : CASE EXPRESSION COLON STATEMENT_LIST
                     | DEFAULT COLON STATEMENT_LIST
       '''
+    if len(p) == 5:
+      symbol_info = {'kind': 'CASE', 'type': p[2].type, 'line': p.lineno(2)}
+    if len(p) == 4:
+      symbol_info = {'kind': 'DEFAULT'}
+    p[0] = Symbol(symbol_info)
 
   def p_expression(self, p):
     '''
         EXPRESSION : LOGICAL_EXPR
                    | STRING
         '''
+    p[0] = p[1]
+    if not p[0].type:
+      p[0].type = 'STRING'
 
   def p_logical_expr(self, p):  # (y<0) and (2*x+1>0) or (x==0)
     '''
@@ -252,25 +272,81 @@ class Parser(object):
                      | NOT COMPARISON_EXPR
                      | NOT COMPARISON_EXPR BINARY_LOGICAL_OPERATOR LOGICAL_EXPR
         '''
+    if len(p) == 2:
+      p[0].type = p[1].type
+    if len(p) == 4:
+      p[0].type = 'BOOL'
+    if len(p) == 3:
+      p[0].type = 'BOOL'
+    if len(p) == 5:
+      p[0].type = 'BOOL'
 
   def p_comparison_expr(self, p):  # 2*x+1<2*y+1
     '''
         COMPARISON_EXPR : ADDITIVE_EXPR
                         | ADDITIVE_EXPR COMPARISON_OPERATOR COMPARISON_EXPR
         '''
+    if len(p) == 2:
+      p[0].type = p[1].type
+    if len(p) == 4:
+      p[0].type = 'BOOL'
 
   def p_additive_expr(self, p):  # 5+2*x
-    '''
-        ADDITIVE_EXPR : MULTIPLICATIVE_EXPR
-                      | MULTIPLICATIVE_EXPR ADDITIVE_OPERATOR ADDITIVE_EXPR
-        '''
+      '''
+          ADDITIVE_EXPR : MULTIPLICATIVE_EXPR
+                        | MULTIPLICATIVE_EXPR ADDITIVE_OPERATOR ADDITIVE_EXPR
+          '''
+      p[0] = Symbol({})
+      if len(p) == 2:
+          p[0].type = p[1].type
 
-  def p_multiplicative_expr(self, p):  # x*2
+      if len(p) == 4:
+          numbers_types = ['INT', 'FLOAT']
+          if p[1].type not in numbers_types or p[3].type not in numbers_types:
+              raise Exception(f"Cant add or subtract non-number types, at line {p.lineno(1)}")
+          p[0].type = 'INT'
+          if p[1].type == 'FLOAT' or p[3].type == 'FLOAT':
+              p[0].type = 'FLOAT'
+
+  def p_multiplicative_expr(self, p):
     '''
         MULTIPLICATIVE_EXPR : TERM
                             | MINUS TERM
                             | TERM MULTIPLICATIVE_OPERATOR MULTIPLICATIVE_EXPR
-        '''
+        ''' 
+
+    p[0] = Symbol({})
+    if len(p) == 2:
+        p[0].type = p[1].type
+
+    if len(p) == 3:
+        numbers_types = ['INT', 'FLOAT', 'UNK']
+        if p[2].type not in numbers_types:
+          raise Exception(f"Cant negate non-number types, at line {p.lineno(1)}")
+        p[0].type = p[2].type
+
+    if len(p) == 4:
+        if p[2].type == 'UNK' or p[3].type == 'UNK':
+          p[0].type = 'UNK'
+        else:
+          numbers_types = ['INT', 'FLOAT']
+          if p[1].type not in numbers_types or p[3].type not in numbers_types:
+              raise Exception(f"Cant multiple, divide or mod non-number types, at line {p.lineno(1)}")
+          p[0].type = 'INT'
+
+          if p[2]=='/':
+            p[0].type = 'FLOAT'
+
+          if p[1].type == 'FLOAT' or p[3].type == 'FLOAT':
+              p[0].type = 'FLOAT'
+
+          if p[2] == '%':
+              if p[1].type != 'INT' or p[3].type != 'INT':
+                  raise Exception(f"Can't mod non-integer types, at line {p.lineno(1)}")
+              p[0].type = 'INT'
+
+          elif p[2] == '//':
+              p[0].type = 'INT'
 
   def p_term(self, p):  # x
     '''
@@ -281,6 +357,27 @@ class Parser(object):
              | TRUE
              | FALSE
         '''
+    p[0] = Symbol({})
+    if len(p) == 4:
+        p[0].type = p[2].type
+
+    if len(p) == 2:
+        if p[1] == 'True':
+            p[0].type = 'BOOL'
+
+        elif p[1] == 'False':
+            p[0].type = 'BOOL'
+
+        elif type(p[1]) == str:
+            symbol = current_table.lookup_symbol(p[1], p.lineno(1))
+            p[0].type = symbol.type
+
+        else:
+            # check if int or float by checking if there is a decimal point
+            if type(p[1]) == float:
+                p[0].type = 'FLOAT'
+            else:
+                p[0].type = 'INT'
 
   def p_function_call(self, p):
     '''
@@ -288,7 +385,7 @@ class Parser(object):
         '''
     symbol = current_table.lookup(p[1])
     if len(symbol.params) != len(p[3]):
-      raise Exception(f"Type mismatch, at line {p.lineno(1)}")
+      raise Exception(f"Length mismatch in function call at line {p.lineno(1)}")
     symbol_info = {'name': p[1], 'kind': 'FUNCTION', 'type': symbol.type, 'params': p[3], 'line': p.lineno(1)}
     p[0] = Symbol(symbol_info)
 
@@ -299,9 +396,9 @@ class Parser(object):
                       | epsilon
         '''
     if len(p) == 2 and p[1] != None:
-        p[0] = [p[1].value]
+        p[0] = [p[1]]
     if len(p) == 4:
-        p[0] = [p[1].value] + p[3]
+        p[0] = [p[1]] + p[3]
     if len(p) == 2 and p[1] == None:
         p[0] = []
 
@@ -368,16 +465,7 @@ if __name__ == "__main__":
 
   code = \
 """
-switch (expression) {
-  case value1:
-    var x=1;
-    break;
-  case value2:
-    var x=2;
-    break;
-  default:
-    var x=3;
-}
+var x = 1;
 """
   # # get the code from the code.txt file
   # with open("code.txt", "r") as f:
