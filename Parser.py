@@ -1,7 +1,7 @@
 # pylint: disable=W,C,R
 from Lexer import Lexer
 from ply import yacc
-
+import sys
 '''
 table.parent -> parentTable
 table['var2'].kind -> [VAR, CONST, FUNC]
@@ -27,10 +27,21 @@ EXPRESSION -> type, value
 PARAMETER_LIST -> regular list of PARAMETER's
 ENUM_MEMBER_LIST -> regular list of ENUM_MEMBER's
 '''
+def error_handler(error):
+  error = f"Error: {error}"
+  print(error)
+  sys.exit()
+
+def warning_handler(warning):
+  warning = f"Warning: {warning}"
+  print(warning)
 
 class Symbol:
     def __init__(self, symbol_info):
       # NOTE: Info are the attributes (e.g. name, type, value, params, etc.)
+      self.type = None
+      self.value = None
+      self.used = False
       for key in symbol_info:
         setattr(self, key, symbol_info[key])
 
@@ -41,16 +52,17 @@ class SymbolTable:
 
     def insert_symbol(self, symbol):
         if symbol.name in self.symbols:
-            raise Exception(f"{symbol.name} already declared, at line {symbol.line}")
+            error_handler(f"{symbol.name} already declared, at line {symbol.line}")
         self.symbols[symbol.name] = symbol
 
     def lookup_symbol(self, name, line):
         if name in self.symbols:
+            self.symbols[name].used = True
             return self.symbols[name]
         elif self.parent:
             return self.parent.lookup_symbol(name, line)
         else:
-            raise Exception(f"usage of undeclared identifier {name}, at line {line}")
+            error_handler(f"usage of undeclared identifier {name}, at line {line}")
 
     def create_child(self):
         child = SymbolTable()
@@ -103,27 +115,27 @@ class Parser(object):
                         | VAR IDENTIFIER ASSIGN EXPRESSION
         '''
     if len(p) == 3:
-      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(2)}
+      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(1)}
       current_table.insert_symbol(Symbol(symbol_info))
     if len(p) == 5:
-      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(2), 'type': p[4].type}
+      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(1), 'type': p[4].type, 'value': p[4].value}
       current_table.insert_symbol(Symbol(symbol_info))
 
   def p_const_declaration(self, p):
     '''
         CONST_DECLARATION : CONST IDENTIFIER ASSIGN EXPRESSION
         '''
-    symbol_info = {'kind': 'CONST', 'name': p[2], 'type': p[4].type, 'line': p.lineno(2)}
+    symbol_info = {'kind': 'CONST', 'name': p[2], 'type': p[4].type, 'line': p.lineno(1), 'value': p[4].value}
     current_table.insert_symbol(Symbol(symbol_info))
 
   def p_enum_declaration(self, p):
     '''
         ENUM_DECLARATION : ENUM IDENTIFIER LBRACE ENUM_MEMBER_LIST RBRACE
         '''
-    symbol_info = {'kind': 'ENUM_DECLARATION', 'name': p[2], 'params': p[4], 'line': p.lineno(2)}
+    symbol_info = {'kind': 'ENUM_DECLARATION', 'name': p[2], 'params': p[4], 'line': p.lineno(1)}
     current_table.insert_symbol(Symbol(symbol_info))
     for param in p[4]:
-      symbol_info = {'kind': 'ENUM_MEMBER', 'type': p[2], 'name': param, 'line': p.lineno(2)}
+      symbol_info = {'kind': 'ENUM_MEMBER', 'type': p[2], 'name': param, 'line': p.lineno(1)}
       current_table.insert_symbol(Symbol(symbol_info))
 
   def p_enum_member_list(self, p):
@@ -135,7 +147,7 @@ class Parser(object):
         p[0] = [p[1]]
     if len(p) == 4:
       if p[1] in p[3]:
-        raise Exception(f" {p[1]} Repeated enum value, at line {p.lineno(1)}")
+        error_handler(f"{p[1]} is a repeated enum value, at line {-1+p.lineno(1)}")
       p[0] = [p[1]] + p[3]
 
   def p_enum_var_declaration(self, p):
@@ -146,7 +158,7 @@ class Parser(object):
     enum_symbol = current_table.lookup_symbol(p[1], p.lineno(1))
     if len(p) == 5:
       if p[4] not in enum_symbol.params:
-        raise Exception(f"Enum value not found, at line {p.lineno(4)}")
+        error_handler(f"Enum value is not found, at line {-1+p.lineno(4)}")
       symbol_info = {'name': p[2], 'kind': 'VAR', 'type': p[1], 'line': p.lineno(2)}
       current_table.insert_symbol(Symbol(symbol_info))
     if len(p) == 3:
@@ -158,10 +170,11 @@ class Parser(object):
         ASSIGNMENT : IDENTIFIER ASSIGN EXPRESSION
         '''
     symbol = current_table.lookup_symbol(p[1], p.lineno(1))
+    symbol.value = p[3].value
     if symbol.kind != 'VAR':
-      raise Exception(f"Cannot assign to non-variable, at line {p.lineno(1)}")
-    if symbol.type and symbol.type != p[3].type:
-      raise Exception(f"Type mismatch, at line {p.lineno(1)}")
+      error_handler(f"Cannot assign to non-variable, at line {-1+p.lineno(1)}")
+    if symbol.type and p[3].type != 'UNK' and symbol.type != p[3].type:
+      error_handler(f"Type mismatch, at line {-1+p.lineno(1)}")
     if not symbol.type:
       symbol.type = p[3].type
 
@@ -171,7 +184,9 @@ class Parser(object):
                      | IF NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK ELSE NEW_SCOPE BLOCK
         '''
     if p[4].type != 'BOOL' and p[4].type != 'UNK':
-      raise Exception(f"Type mismatch, at line {p.lineno(4)}")
+      error_handler(f"Non-boolean expression found in the if statement, at line {-1+p.lineno(3)}")
+    if p[4].value == False:
+      warning_handler(f"Unreachable code, at line {-1+p.lineno(3)}")
 
   def p_loop(self, p):
     '''
@@ -181,17 +196,17 @@ class Parser(object):
              | DO NEW_SCOPE BLOCK WHILE LPAREN EXPRESSION RPAREN SEMICOLON
         '''
     if len(p) == 7 and p[4].type != 'BOOL' and p[4].type != 'UNK':
-      raise Exception(f"Type mismatch, at line {p.lineno(4)}")
+      error_handler(f"Non-boolean expression found in the while loop, at line {-1+p.lineno(3)}")
     if len(p) == 11  and p[6].type != 'BOOL' and p[6].type != 'UNK':
-      raise Exception(f"Type mismatch, at line {p.lineno(6)}")
+      error_handler(f"Non-boolean expression found in the for loop, at line {-1+p.lineno(7)}")
     if len(p) == 9 and p[6].type != 'BOOL' and p[6].type != 'UNK':
-      raise Exception(f"Type mismatch, at line {p.lineno(6)}")
+      error_handler(f"Non-boolean expression found in the do while loop, at line {-1+p.lineno(5)}")
 
   def p_function_declaration(self, p):
     '''
-        FUNCTION_DECLARATION : FUNCTION NEW_SCOPE IDENTIFIER LPAREN PARAMETER_LIST RPAREN BLOCK
+        FUNCTION_DECLARATION : FUNCTION IDENTIFIER NEW_SCOPE LPAREN PARAMETER_LIST RPAREN BLOCK
         '''
-    symbol_info = {'name': p[3], 'kind': 'FUNCTION', 'type': 'UNK', 'params': p[5], 'line': p.lineno(3)}
+    symbol_info = {'name': p[3], 'kind': 'FUNCTION', 'type': 'UNK', 'params': p[5], 'line': p.lineno(1)}
     current_table.insert_symbol(Symbol(symbol_info))
 
   def p_parameter_list(self, p):
@@ -214,12 +229,14 @@ class Parser(object):
         BLOCK : LBRACE STATEMENT_LIST RBRACE
               | LBRACE RBRACE
         '''
+    global current_table
     current_table = current_table.parent # NOTE: Excuted at the end of the block
 
-  def p_new_scope(p):# Dummy rule for creating a new scope semantic action
+  def p_new_scope(self, p):# Dummy rule for creating a new scope semantic action
     '''
         NEW_SCOPE :
     '''
+    global current_table
     current_table = current_table.create_child()
 
   def p_return_statement(self, p):
@@ -229,11 +246,11 @@ class Parser(object):
 
   def p_switch_statement(self, p):
     '''
-        SWITCH_STATEMENT : SWITCH LPAREN EXPRESSION NEW_SCOPE RPAREN LBRACE CASE_LIST RBRACE
+        SWITCH_STATEMENT : SWITCH LPAREN EXPRESSION RPAREN NEW_SCOPE LBRACE CASE_LIST RBRACE
         '''
     for case in p[7]:
       if case.kind == 'CASE' and p[3].type!= 'UNK' and case.type != p[3].type:
-        raise Exception(f"Type mismatch, at line {case.line}")
+        error_handler(f"Non-boolean expression found in the switch statement, at line {case.line}")
 
   def p_case_list(self, p):
     '''
@@ -251,7 +268,7 @@ class Parser(object):
                     | DEFAULT COLON STATEMENT_LIST
       '''
     if len(p) == 5:
-      symbol_info = {'kind': 'CASE', 'type': p[2].type, 'line': p.lineno(2)}
+      symbol_info = {'kind': 'CASE', 'type': p[2].type, 'line': p.lineno(1)}
     if len(p) == 4:
       symbol_info = {'kind': 'DEFAULT'}
     p[0] = Symbol(symbol_info)
@@ -261,9 +278,12 @@ class Parser(object):
         EXPRESSION : LOGICAL_EXPR
                    | STRING
         '''
-    p[0] = p[1]
-    if not p[0].type:
+    p[0]=Symbol({})
+    if not p[1].type:
       p[0].type = 'STRING'
+    else:
+      p[0].type = p[1].type
+      p[0].value = p[1].value
 
   def p_logical_expr(self, p):  # (y<0) and (2*x+1>0) or (x==0)
     '''
@@ -272,8 +292,10 @@ class Parser(object):
                      | NOT COMPARISON_EXPR
                      | NOT COMPARISON_EXPR BINARY_LOGICAL_OPERATOR LOGICAL_EXPR
         '''
+    p[0] = Symbol({})
     if len(p) == 2:
       p[0].type = p[1].type
+      p[0].value = p[1].value
     if len(p) == 4:
       p[0].type = 'BOOL'
     if len(p) == 3:
@@ -286,8 +308,10 @@ class Parser(object):
         COMPARISON_EXPR : ADDITIVE_EXPR
                         | ADDITIVE_EXPR COMPARISON_OPERATOR COMPARISON_EXPR
         '''
+    p[0] = Symbol({})
     if len(p) == 2:
       p[0].type = p[1].type
+      p[0].value = p[1].value
     if len(p) == 4:
       p[0].type = 'BOOL'
 
@@ -299,11 +323,12 @@ class Parser(object):
       p[0] = Symbol({})
       if len(p) == 2:
           p[0].type = p[1].type
+          p[0].value = p[1].value
 
       if len(p) == 4:
           numbers_types = ['INT', 'FLOAT']
           if p[1].type not in numbers_types or p[3].type not in numbers_types:
-              raise Exception(f"Cant add or subtract non-number types, at line {p.lineno(1)}")
+              error_handler(f"Can't add or subtract non-number types, at line {-1+p.lineno(2)}")
           p[0].type = 'INT'
           if p[1].type == 'FLOAT' or p[3].type == 'FLOAT':
               p[0].type = 'FLOAT'
@@ -318,11 +343,12 @@ class Parser(object):
     p[0] = Symbol({})
     if len(p) == 2:
         p[0].type = p[1].type
+        p[0].value = p[1].value
 
     if len(p) == 3:
         numbers_types = ['INT', 'FLOAT', 'UNK']
         if p[2].type not in numbers_types:
-          raise Exception(f"Cant negate non-number types, at line {p.lineno(1)}")
+          error_handler(f"Can't negate non-number types, at line {-1+p.lineno(1)}")
         p[0].type = p[2].type
 
     if len(p) == 4:
@@ -331,7 +357,7 @@ class Parser(object):
         else:
           numbers_types = ['INT', 'FLOAT']
           if p[1].type not in numbers_types or p[3].type not in numbers_types:
-              raise Exception(f"Cant multiple, divide or mod non-number types, at line {p.lineno(1)}")
+              error_handler(f"Can't multiple, divide or mod non-number types, at line {-1+p.lineno(2)}")
           p[0].type = 'INT'
 
           if p[2]=='/':
@@ -342,7 +368,7 @@ class Parser(object):
 
           if p[2] == '%':
               if p[1].type != 'INT' or p[3].type != 'INT':
-                  raise Exception(f"Can't mod non-integer types, at line {p.lineno(1)}")
+                  error_handler(f"Can't mod non-integer types, at line {-1+p.lineno(2)}")
               p[0].type = 'INT'
 
           elif p[2] == '//':
@@ -367,10 +393,12 @@ class Parser(object):
 
         elif p[1] == 'False':
             p[0].type = 'BOOL'
+            p[0].value = False
 
         elif type(p[1]) == str:
             symbol = current_table.lookup_symbol(p[1], p.lineno(1))
             p[0].type = symbol.type
+            p[0].value = symbol.value
 
         else:
             # check if int or float by checking if there is a decimal point
@@ -385,7 +413,7 @@ class Parser(object):
         '''
     symbol = current_table.lookup(p[1])
     if len(symbol.params) != len(p[3]):
-      raise Exception(f"Length mismatch in function call at line {p.lineno(1)}")
+      error_handler(f"Length mismatch in function call, at line {-1+p.lineno(1)}")
     symbol_info = {'name': p[1], 'kind': 'FUNCTION', 'type': symbol.type, 'params': p[3], 'line': p.lineno(1)}
     p[0] = Symbol(symbol_info)
 
@@ -465,15 +493,14 @@ if __name__ == "__main__":
 
   code = \
 """
-var x = 1;
+var x = False;
+var y = x;
+y = True;
 """
-  # # get the code from the code.txt file
-  # with open("code.txt", "r") as f:
-  #   code = f.read()
-
   parse = P.parser.parse(code)
 
-  #print(parse)
-  # if parse is not None:
-  #   print("Parsing Successful!")
+  for symbol in current_table.symbols.values():
+    if (symbol.kind == 'VAR' or symbol.kind == 'CONST') and symbol.used == False:
+      warning_handler(f"Variable {symbol.name} declared but not used, at line {-1+symbol.line}")
 
+  print("Parsing Successful!")
