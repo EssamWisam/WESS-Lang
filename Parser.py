@@ -2,12 +2,64 @@
 from Lexer import Lexer
 from ply import yacc
 
+'''
+table.parent -> parentTable
+table['var2'].kind -> [VAR, CONST, FUNC]
+table['var1'].type -> [INT, FLOAT, STR, None] None == cureently unknown or doesn't exist
+'''
+'''
+kind  -> **attributes
+
+VAR   -> name, line, [type], [value], [enum (enum symbole for unassigned enum vars)]
+
+CONST -> name, line, type, value
+
+FUNC  -> name, line, type, params
+
+ENUM_DECLARATION  -> name, line, params (list of values that the enum can take)
+'''
+'''
+EXPRESSION -> type, value
+PARAMETER_LIST -> regular list of PARAMETER's
+ENUM_MEMBER_LIST -> regular list of ENUM_MEMBER's
+'''
+
+class Symbol:
+    def __init__(self, symbol_info):
+      # NOTE: Info are the attributes (e.g. name, type, value, params, etc.)
+      for key in symbol_info:
+        setattr(self, key, symbol_info[key])
+
+class SymbolTable:
+    def __init__(self):
+        self.symbols = {}
+        self.parent = None
+
+    def insert_symbol(self, symbol):
+        if symbol.name in self.symbols:
+            raise Exception(f"{symbol.name} already declared, at line {symbol.line}")
+        self.symbols[symbol.name] = symbol
+
+    def lookup_symbol(self, name, line):
+        if name in self.symbols:
+            return self.symbols[name]
+        elif self.parent:
+            return self.parent.lookup_symbol(name, line)
+        else:
+            raise Exception(f"usage of undeclared identifier {name}, at line {line}")
+
+    def create_child(self):
+        child = SymbolTable()
+        child.parent = self
+        return child
+
+current_table = SymbolTable()
 
 class Parser(object):
 
   tokens = Lexer.tokens
 
-  def p_program(self, p):  ### Top-level rule
+  def p_program(self, p):  # Top-level rule
     '''
         PROGRAM : STATEMENT_LIST
         '''
@@ -26,14 +78,14 @@ class Parser(object):
                   | LOOP
                   | FUNCTION_DECLARATION
                   | EXPRESSION SEMICOLON
-                  | BLOCK
+                  | NEW_SCOPE BLOCK
                   | SWITCH_STATEMENT
                   | RETURN_STATEMENT SEMICOLON
                   | CONTINUE_STATEMENT
                   | BREAK_STATEMENT
         '''
 
-  def p_declaration(self, p):# ENUM_VAR_DECLARATION is variable instantiation
+  def p_declaration(self, p):# NOTE: ENUM_VAR_DECLARATION is variable instantiation
     '''
         DECLARATION : VAR_DECLARATION
                     | CONST_DECLARATION
@@ -46,92 +98,124 @@ class Parser(object):
         VAR_DECLARATION : VAR IDENTIFIER 
                         | VAR IDENTIFIER ASSIGN EXPRESSION
         '''
+    if len(p) == 3:
+      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(2)}
+      current_table.insert_symbol(Symbol(symbol_info))
+    if len(p) == 5:
+      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(2), 'type': p[4].type, 'value': p[4].value}
+      current_table.insert_symbol(Symbol(symbol_info))
 
   def p_const_declaration(self, p):
     '''
         CONST_DECLARATION : CONST IDENTIFIER ASSIGN EXPRESSION
         '''
+    symbol_info = {'kind': 'CONST', 'name': p[2], 'type': p[4].type, 'value': p[4].value, 'line': p.lineno(2)}
+    current_table.insert_symbol(Symbol(symbol_info))
 
   def p_enum_declaration(self, p):
     '''
         ENUM_DECLARATION : ENUM IDENTIFIER LBRACE ENUM_MEMBER_LIST RBRACE
         '''
+    symbol_info = {'kind': 'ENUM_DECLARATION', 'name': p[2], 'params': p[4], 'line': p.lineno(2)}
+    current_table.insert_symbol(Symbol(symbol_info))
 
   def p_enum_member_list(self, p):
     '''
         ENUM_MEMBER_LIST : IDENTIFIER
                          | IDENTIFIER COMMA ENUM_MEMBER_LIST
         '''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    if len(p) == 4:
+      if p[1] in p[3]:
+        raise Exception(f" {p[1]} Repeated enum value, at line {p.lineno(1)}")
+      p[0] = [p[1]] + p[3]
 
   def p_enum_var_declaration(self, p):
     '''
         ENUM_VAR_DECLARATION : ENUM IDENTIFIER IDENTIFIER ASSIGN IDENTIFIER
                              | ENUM IDENTIFIER IDENTIFIER
         '''
+    if len(p) == 6:
+      enum_symbol = current_table.lookup_symbol(p[2], p.lineno(2))
+      if p[5] not in enum_symbol.params:
+        raise Exception(f"Enum value not found, at line {p.lineno(5)}")
+      symbol_info = {'name': p[3], 'kind': 'VAR', 'type': 'INT', 'value': enum_symbol.params.index(p[5]), 'line': p.lineno(3)}
+      current_table.insert_symbol(Symbol(symbol_info))
+    if len(p) == 4:
+      enum_symbol = current_table.lookup_symbol(p[2], p.lineno(2))
+      symbol_info = {'name': p[2], 'kind': 'VAR', 'type': 'INT', 'enum': enum_symbol, 'line': p.lineno(3)}
+      current_table.insert_symbol(Symbol(symbol_info))
 
   def p_assignment(self, p):
     '''
         ASSIGNMENT : IDENTIFIER ASSIGN EXPRESSION
         '''
+    symbol = current_table.lookup_symbol(p[1], p.lineno(1))
+    if symbol.kind != 'VAR':
+      raise Exception(f"Cannot assign to non-variable, at line {p.lineno(1)}")
+    if symbol.type and symbol.type != p[3].type:
+      raise Exception(f"Type mismatch, at line {p.lineno(1)}")
+    if not symbol.type:
+      symbol.type = p[3].type
+    symbol.value = p[3].value
 
   def p_if_statement(self, p):
     '''
-        IF_STATEMENT : IF LPAREN EXPRESSION RPAREN BLOCK
-                     | IF LPAREN EXPRESSION RPAREN BLOCK ELSE BLOCK
+        IF_STATEMENT : IF NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK
+                     | IF NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK ELSE NEW_SCOPE BLOCK
         '''
+    if p[4].type != 'BOOL':
+      raise Exception(f"Type mismatch, at line {p.lineno(4)}")
 
   def p_loop(self, p):
     '''
-        LOOP : WHILE LPAREN EXPRESSION RPAREN BLOCK
-             | FOR LPAREN ASSIGNMENT SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
-             | FOR LPAREN VAR_DECLARATION SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
-             | DO BLOCK WHILE LPAREN EXPRESSION RPAREN SEMICOLON
+        LOOP : WHILE NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK
+             | FOR NEW_SCOPE LPAREN ASSIGNMENT SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
+             | FOR NEW_SCOPE LPAREN VAR_DECLARATION SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
+             | DO NEW_SCOPE BLOCK WHILE LPAREN EXPRESSION RPAREN SEMICOLON
         '''
+    if len(p) == 7 and p[4].type != 'BOOL':
+      raise Exception(f"Type mismatch, at line {p.lineno(4)}")
+    if len(p) == 11  and p[6].type != 'BOOL':
+      raise Exception(f"Type mismatch, at line {p.lineno(6)}")
+    if len(p) == 9 and p[6].type != 'BOOL':
+      raise Exception(f"Type mismatch, at line {p.lineno(6)}")
 
   def p_function_declaration(self, p):
     '''
-        FUNCTION_DECLARATION : FUNCTION IDENTIFIER LPAREN PARAMETER_LIST RPAREN BLOCK
+        FUNCTION_DECLARATION : FUNCTION NEW_SCOPE IDENTIFIER LPAREN PARAMETER_LIST RPAREN BLOCK
         '''
+    symbol_info = {'name': p[3], 'kind': 'FUNCTION', 'type': None, 'params': p[5], 'line': p.lineno(3)}
+    current_table.insert_symbol(Symbol(symbol_info))
 
-  def p_parameter_list(self, p): #TODO add epsilon
+  def p_parameter_list(self, p):
     '''
         PARAMETER_LIST : IDENTIFIER
                        | IDENTIFIER COMMA PARAMETER_LIST
                        | epsilon
         '''
-  # def p_block_statement(self, p):
-  #   '''
-  #       BLOCK_STATEMENT : STATEMENT
-  #                       | CONTINUE_STATEMENT
-  #                       | BREAK_STATEMENT
-  #       '''
-  # def p_block_statement_list(self, p):
-  #   '''
-  #       BLOCK_STATEMENT_LIST : BLOCK_STATEMENT
-  #                            | BLOCK_STATEMENT BLOCK_STATEMENT_LIST
-  #       '''
+    if len(p) == 2 and p[1] != None: # TODO: not sure !epsilon
+        p[0] = [p[1]]
+        symbol_info = {'name': p[1], 'kind': 'VAR', 'type': None, 'value': None, 'line': p.lineno(1)}
+        current_table.insert_symbol(Symbol(symbol_info))
+    if len(p) == 4:
+        p[0] = [p[1]] + p[3]
+    if len(p) == 2 and p[1] == None: # TODO: not sure epsilon
+        p[0] = []
+
   def p_block(self, p):
     '''
         BLOCK : LBRACE STATEMENT_LIST RBRACE
               | LBRACE RBRACE
         '''
-  # def p_loop_statement(self, p):
-  #   '''
-  #       LOOP_STATEMENT : STATEMENT
-  #                       | CONTINUE
-  #                       | BREAK
-  #       '''
-  # def p_loop_statement_list(self, p):
-  #   '''
-  #       LOOP_STATEMENT_LIST : LOOP_STATEMENT
-  #                           | LOOP_STATEMENT LOOP_STATEMENT_LIST
-  #       '''
-    
-  # def p_loop_block(self, p):
-  #   '''
-  #       LOOP_BLOCK : LBRACE LOOP_STATEMENT_LIST RBRACE
-  #                  | LBRACE RBRACE
-  #       '''
+    current_table = current_table.parent # NOTE: Excuted at the end of the block
+
+  def p_new_scope(p):# Dummy rule for creating a new scope semantic action
+    '''
+        NEW_SCOPE : 
+    '''
+    current_table = current_table.create_child()
 
   def p_return_statement(self, p):
     '''
@@ -172,7 +256,7 @@ class Parser(object):
   def p_comparison_expr(self, p):  # 2*x+1<2*y+1
     '''
         COMPARISON_EXPR : ADDITIVE_EXPR
-                        | ADDITIVE_EXPR COMPARISON_OPERATOR ADDITIVE_EXPR
+                        | ADDITIVE_EXPR COMPARISON_OPERATOR COMPARISON_EXPR
         '''
 
   def p_additive_expr(self, p):  # 5+2*x
@@ -207,7 +291,7 @@ class Parser(object):
         epsilon :
         '''
     
-  def p_argument_list(self, p):# TODO add epsilon
+  def p_argument_list(self, p):
     '''
         ARGUMENT_LIST : EXPRESSION
                       | EXPRESSION COMMA ARGUMENT_LIST
@@ -270,24 +354,26 @@ if __name__ == "__main__":
   ### Test the parser
   P = Parser()
 
-#   code = \
-# """
-# var x;
-# x = 5;
-# const pi = 3.14;
-# if (x*pi > 10) {
-#   x = "Hello";
-# } else {
-#   x = "World";
-# }
-# """
-  # get the code from the code.txt file
-  with open("code.txt", "r") as f:
-    code = f.read()
+  code = \
+"""
+switch (expression) {
+  case value1:
+    var x=1;
+    break;
+  case value2:
+    var x=2;
+    break;
+  default:
+    var x=3;
+}
+"""
+  # # get the code from the code.txt file
+  # with open("code.txt", "r") as f:
+  #   code = f.read()
 
   parse = P.parser.parse(code)
 
-  # print(parse)
+  #print(parse)
   # if parse is not None:
   #   print("Parsing Successful!")
 
