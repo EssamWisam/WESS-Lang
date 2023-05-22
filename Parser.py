@@ -286,16 +286,28 @@ class Parser(object):
     '''
         FUNCTION_CALL : IDENTIFIER LPAREN ARGUMENT_LIST RPAREN
         '''
-  def p_epsilon(self, p):
-    '''
-        epsilon :
-        '''
-    
+    symbol = current_table.lookup(p[1])
+    if len(symbol.params) != len(p[3]):
+      raise Exception(f"Type mismatch, at line {p.lineno(1)}")
+    symbol_info = {'name': p[1], 'kind': 'FUNCTION', 'type': symbol.type, 'params': p[3], 'line': p.lineno(1)}
+    p[0] = Symbol(symbol_info)
+
   def p_argument_list(self, p):
     '''
         ARGUMENT_LIST : EXPRESSION
                       | EXPRESSION COMMA ARGUMENT_LIST
                       | epsilon
+        '''
+    if len(p) == 2 and p[1] != None:
+        p[0] = [p[1].value]
+    if len(p) == 4:
+        p[0] = [p[1].value] + p[3]
+    if len(p) == 2 and p[1] == None:
+        p[0] = []
+
+  def p_epsilon(self, p):
+    '''
+        epsilon :
         '''
 
   def p_logical_operator(self, p):
