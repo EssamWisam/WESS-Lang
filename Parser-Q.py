@@ -140,24 +140,46 @@ class Parser(object):
     self.Quadruples.append(Quadruple(op=None, arg1=p[4].reg, arg2=None))
     # Todo: add the assigned register Quadruple.result to the symbol table
 
+  enum_value_counter = 0 
+  
   def p_enum_declaration(self, p):
     '''
         ENUM_DECLARATION : ENUM IDENTIFIER LBRACE ENUM_MEMBER_LIST RBRACE
         '''
+    self.enum_value_counter = 0
+       
     # Skip Enum
   def p_enum_member_list(self, p):
     '''
         ENUM_MEMBER_LIST : IDENTIFIER
                          | IDENTIFIER COMMA ENUM_MEMBER_LIST
         '''
+    if len(p) == 2:
+      self.Quadruples.append(Quadruple(op=None, arg1=self.enum_value_counter, arg2=None))
+      self.enum_value_counter += 1
+    if len(p) == 4:
+      self.Quadruples.append(Quadruple(op=None, arg1=self.enum_value_counter, arg2=None))
+      self.enum_value_counter += 1
+    
+    # Enum takes N values, we assigned to it N registers (ColorRed=t1 (Red), ColorBlue=t2 (Blue),....)
+        
     # Skip Enum
   def p_enum_var_declaration(self, p):
     '''
         ENUM_VAR_DECLARATION : ENUM IDENTIFIER IDENTIFIER ASSIGN IDENTIFIER
                              | ENUM IDENTIFIER IDENTIFIER
         '''
-    # Skip Enum
     
+    # Only add a register for the second identifier (in case its used further)
+    if len(p) == 6:
+      self.Quadruples.append(Quadruple(op=None, arg1=p[5], arg2=None))
+    if len(p) == 4:
+      self.Quadruples.append(Quadruple(op=None, arg1="undefined", arg2=None))
+    
+    # todo: need to do symbol table stuff here special to enums!
+    # for example, check that the last identifier in the first rule is in the enum list already; 
+    # and belongs to the same enum type
+     
     
   ### MODIFIED RULE
   def p_function_declaration(self, p):
@@ -308,32 +330,9 @@ class Parser(object):
       self.Quadruples.append(lbl2)
       #for inst in block_instructions:
       #    print(inst)
-    
-    
-    '''
-    for (var x = 0; x < 10; x = x + 1) {
-      var x = 5;
-      var y = 4;
-    }
-    
-    var x = 0;
-    while (x < 10) {
-      var x = 5;
-      var y = 7;
-      x = x + 1;
-      }
-      
-      var x = 0; <<<
-      t2 = x < 10 <<<
-      L1:
-      JMPF t2 L2
-      x = x + 1; <<<
-      var x = 5; <<<
-      var y = 7; <<<
-      JMP L1
-      L2:
+      self.Q_len = 0
+      self.Q2_len = 0
 
-    '''
 
   
   ### Added1
@@ -404,9 +403,11 @@ class Parser(object):
         BREAK_STATEMENT : BREAK SEMICOLON
         '''
 
+
+
   def p_switch_statement(self, p):
     '''
-        SWITCH_STATEMENT : SWITCH LPAREN EXPRESSION RPAREN LBRACE CASE_LIST RBRACE
+        SWITCH_STATEMENT : SWITCH LPAREN EXPRESSION RPAREN LBRACE CASE_LIST RBRACE LBLD
         '''
 
   def p_case_list(self, p):
@@ -415,11 +416,51 @@ class Parser(object):
                   | CASE_CLAUSE CASE_LIST
       '''
 
+  ### MODIFIED
   def p_case_clause(self, p):
     '''
-        CASE_CLAUSE : CASE EXPRESSION COLON STATEMENT_LIST
+        CASE_CLAUSE : CASE EXPRESSION JNE COLON STATEMENT_LIST JMP_S LBLC
                     | DEFAULT COLON STATEMENT_LIST
       '''
+
+
+  ### Added
+  def p_jne(self,p):
+    '''
+    JNE : epsilon
+    '''
+    p[0] = object()
+    p[0].label = Label()
+    self.Quadruples.append(f"JNE {p[-1].reg} {p[0].label}")
+    
+  ### Added
+  def p_lblc(self,p):
+    '''
+    LBLC : epsilon
+    '''
+    self.Quadruples.append(p[-4].label)
+    
+  
+  def_label = None
+  
+  ### Added (JMP for switchcase)
+  def p_jmp_s(self,p):
+    '''
+    JMP_S : epsilon
+    '''
+    if self.def_label:
+      self.Quadruples.append(f"JMP {self.def_label}")
+    else:
+      self.def_label = Label()
+      self.Quadruples.append(f"JMP {self.def_label}")
+    
+  ### Added
+  def p_lbld(self, p):
+    '''
+    LBLD : epsilon
+    '''
+    self.Quadruples.append(self.def_label)
+    self.def_label = None
 
   ### Expressions
   def p_expression(self, p):
@@ -427,9 +468,14 @@ class Parser(object):
         EXPRESSION : LOGICAL_EXPR
                    | STRING
         '''
-    p[0] = object()
-    p[0].reg = p[1].reg
-
+    if p.slice[1].type != 'STRING':
+      p[0] = object()
+      p[0].reg = p[1].reg
+    else:
+      p[0] = object()
+      p[0].reg = p[1]
+      
+      
   ### Remove last rule
   def p_logical_expr(self, p):  # (y<0) and (2*x+1>0) or (x==0)
     '''
@@ -650,7 +696,74 @@ if __name__ == "__main__":
     }
     
     """
-  root = P.parser.parse(code_whiles)  # returns the value of the root node
+    
+  # try x < 0 and y > 0
+  switch_case = \
+    """
+    switch(x<5 and y>5){
+      
+      case x==5:
+        var z = 2;
+        var y = 55;
+        var w = 99;
+        break;
+        
+    
+      case y==5:
+        var z = 2;
+        var y = 55;
+        var w = 99;
+        break;
+        
+        
+      default:
+        m = x + y + z;
+    }
+    
+        switch(x<5 and y>5){
+      
+      case x==5:
+        var z = 2;
+        var y = 55;
+        var w = 99;
+        break;
+        
+    
+      case y==5:
+        var z = 2;
+        var y = 55;
+        var w = 99;
+        break;
+        
+      default:
+        m = x + y + z;
+    }
+    """
+    
+  enums = \
+    """
+    enum color {red, blue, green};
+    
+    enum color c = blue;
+    
+    """
+    
+    
+  exprs = \
+    """
+    while (x > 5 and x < 10) {
+      if (y == 3){
+        z = 5;
+        m = 2;
+      }
+      else{
+        x = 4;
+        y = 2;
+        
+      }
+    }
+    """
+  root = P.parser.parse(exprs)  # returns the value of the root node
 
 
   for i in P.Quadruples:

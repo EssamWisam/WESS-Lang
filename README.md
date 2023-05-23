@@ -83,9 +83,18 @@ Let's get started!
 >>   GREEN,
 >>   BLUE
 >> };
->> enum Colors c;
+>> enum Colors c = RED;
 >> c = RED;
 >> ```
+
+>>>```
+> ### Enums:
+>> t1 = 0;
+>> t2 = 1;
+>> t3 = 2;
+>> t4 = undefined;
+>> t4 = 0;
+>>>```
 
 > ### Operators:
 >> #### Arithmetic Operators:
@@ -198,6 +207,26 @@ Let's get started!
 >>> for (var i = 0; i < 10; i = i + 1) {
 >>>   # code
 >>> }
+>>>  for (var x = 0; x < 10; x = x + 1) {
+ >>>   var x = 5;
+>>>    var y = 4;
+>>>  }
+ >>> var x = 0;
+>>>  while (x < 10) {
+>>>    var x = 5;
+>>>    var y = 7;
+>>>    x = x + 1;
+>>>    }
+>>>     x = 0; 
+>>>     t1 = x
+>>>    t2 = x < 10 
+>>>    L1:
+>>>    JMPF t2 L2
+>>>    x = x + 1; 
+>>>    var x = 5; 
+>>>    var y = 7;
+>>>    JMP L1
+>>>   L2:
 >>> ```
 
 > ### Switch Statement:
@@ -212,7 +241,25 @@ Let's get started!
 >>   default:
 >>     # statements
 >> }
+>> Low Level Code:
+>> t2 = t1 + 3
+>> JE t1 == value1 L1
+>> JE t1 == value2 L2
+>> JE t1 == value L3
+>> <Body of Default>
+>> L1:
+>> Body of L1 
+>> JMP LF
+>> L2:
+>> Body of L2
+>> JMP LF
+>> L3:
+>> Body of L3
+>> JMP LF
+>> LF:
 >> ```
+
+
 
 > ### Functions:
 > ```javascript
