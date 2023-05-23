@@ -32,7 +32,7 @@ def compile_page():
     if request.method == 'POST':
         messages_arr=parse_gui(request.form['code'])
         print(messages_arr)
-        #messages_arr="<br>".join(messages_arr)
+        
         return render_template('compile.html', err_msg='', show_img=False, messages=messages_arr, code=request.form['code'])
 
 

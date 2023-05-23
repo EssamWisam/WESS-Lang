@@ -7,7 +7,7 @@ html {
 .logo {
   margin-top: 0%;
   display: flex;
-  /* justify-content: center; */
+  justify-content: center;
   color: white;
   font-size: 2rem;
 }
@@ -19,7 +19,7 @@ html {
 .logo-top {
   margin-top: 0%;
   display: flex;
-  /* justify-content: center; */
+  justify-content: center;
   color: white;
   font-size: 2rem;
 }
@@ -31,12 +31,12 @@ html {
 .content {
   color: white;
   display: flex;
-  /* justify-content: center; */
+  justify-content: center;
 }
 .content p {
   font-weight: 400;
   font-size: 1.35rem;
-  /* line-height: 3rem; */
+  line-height: 3rem;
 }
 .content p span {
   color: #00C2CB;
@@ -163,7 +163,13 @@ a {
   display: none;
 }
 
+.code-editor-container {
+  display: flex;
+  justify-content: center;
+}
+
 .CodeMirror {
   text-align: left;
   font-family: "Poppins", sans-serif;
+  width: 100%;
 }
