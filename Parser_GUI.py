@@ -31,13 +31,15 @@ class object:
   pass
 
 def error_handler(error):
+  global success
+  success = False
   error = f"Error: {error}"
-  print(error)
-  sys.exit()
+  output_result.append(error)
+  P.parser.restart()
 
 def warning_handler(warning):
   warning = f"Warning: {warning}"
-  print(warning)
+  output_result.append(warning)
 
 class Symbol:
     def __init__(self, symbol_info):
@@ -73,6 +75,7 @@ class SymbolTable:
         return child
 
 current_table = SymbolTable()
+output_result = []
 
 class Parser(object):
 
@@ -486,27 +489,27 @@ class Parser(object):
 
 
   def p_error(self, p):
-    print("Syntax error")
+    global success
+    success=False
+    output_result.append("Error: Syntax error")
 
   def __init__(self):
     self.lexer = Lexer()
     self.parser = yacc.yacc(module=self)
-
-
-if __name__ == "__main__":
-  ### Test the parser
-
-  code = \
-"""
-var x = False;
-y = True;
-var y = x;
-"""
+P = Parser()
+success = True
+def parse_gui(code):
+  global output_result, current_table, P,success
+  success=True
+  current_table = SymbolTable()
+  output_result = []
   P = Parser()
+  print("In parser",code)
   parse = P.parser.parse(code)
-
   for symbol in current_table.symbols.values():
     if (symbol.kind == 'VAR' or symbol.kind == 'CONST') and symbol.used == False:
       warning_handler(f"Variable {symbol.name} declared but not used, at line {symbol.line}")
-
-  print("Parsing Successful!")
+  if success:
+    output_result.append("Compiled Successfully")
+  print("In parser",output_result)
+  return output_result

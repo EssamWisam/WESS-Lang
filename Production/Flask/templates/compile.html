@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Upload</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+    <link rel="icon" type="image/x-icon" href="/static/icon.png">
+    <!-- Add CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <!-- Add CodeMirror theme (optional) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
+  </head>
+  <body>
+
+    <!-- ... -->
+
+    <div class='hero'>
+      <div class="upload">
+        <form method="post" enctype="multipart/form-data" id="upload-form">
+          <!-- Replace textarea with a div -->
+          <div id="code-editor" style="width: 100%; height: 50px;"></div>
+          <div class="up" id="upload"><span>Start Doing the Magic!</span><input id="upload" type="submit" value=Upload class="up-btn"></div>
+        </form>
+      </div>
+
+      <!-- ... -->
+
+    </div>
+
+  </body>
+</html>
+
+<!-- Add CodeMirror JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+<!-- Add CodeMirror mode for the language you want to use (e.g., JavaScript) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+<script>
+  // Initialize CodeMirror on the div
+  var codeEditor = CodeMirror(document.getElementById("code-editor"), {
+    mode: "javascript", // Set the mode to the language you want to use
+    theme: "monokai", // Set the theme (optional)
+    lineNumbers: true, // Show line numbers
+    value: "{% if code %}{{ code }}{% endif %}" // Set the initial value
+  });
+
+  document.getElementById("upload").addEventListener("click", function(){
+    document.getElementById("loading").style.display = "block";
+  });
+
+  // Update the form submission to include the CodeMirror content
+  document.getElementById("upload-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    var codeContent = codeEditor.getValue();
+    var formData = new FormData(event.target);
+    formData.set("code", codeContent);
+    // Submit the form using AJAX or any other method you prefer
+  });
+</script>
