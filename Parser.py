@@ -27,6 +27,9 @@ EXPRESSION -> type, value
 PARAMETER_LIST -> regular list of PARAMETER's
 ENUM_MEMBER_LIST -> regular list of ENUM_MEMBER's
 '''
+class object:
+  pass
+
 def error_handler(error):
   error = f"Error: {error}"
   print(error)
@@ -52,7 +55,7 @@ class SymbolTable:
 
     def insert_symbol(self, symbol):
         if symbol.name in self.symbols:
-            error_handler(f"{symbol.name} already declared, at line {symbol.line}")
+            error_handler(f"{symbol.name} already declared, at line {-1+symbol.line}")
         self.symbols[symbol.name] = symbol
 
     def lookup_symbol(self, name, line):
@@ -62,7 +65,7 @@ class SymbolTable:
         elif self.parent:
             return self.parent.lookup_symbol(name, line)
         else:
-            error_handler(f"usage of undeclared identifier {name}, at line {line}")
+            error_handler(f"usage of undeclared identifier {name}, at line {-1+line}")
 
     def create_child(self):
         child = SymbolTable()
@@ -118,14 +121,14 @@ class Parser(object):
       symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(1)}
       current_table.insert_symbol(Symbol(symbol_info))
     if len(p) == 5:
-      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(1), 'type': p[4].type, 'value': p[4].value}
+      symbol_info = {'kind': 'VAR', 'name': p[2], 'line': p.lineno(1), 'type': p[4].symbol.type, 'value': p[4].symbol.value}
       current_table.insert_symbol(Symbol(symbol_info))
 
   def p_const_declaration(self, p):
     '''
         CONST_DECLARATION : CONST IDENTIFIER ASSIGN EXPRESSION
         '''
-    symbol_info = {'kind': 'CONST', 'name': p[2], 'type': p[4].type, 'line': p.lineno(1), 'value': p[4].value}
+    symbol_info = {'kind': 'CONST', 'name': p[2], 'type': p[4].symbol.type, 'line': p.lineno(1), 'value': p[4].symbol.value}
     current_table.insert_symbol(Symbol(symbol_info))
 
   def p_enum_declaration(self, p):
@@ -170,22 +173,22 @@ class Parser(object):
         ASSIGNMENT : IDENTIFIER ASSIGN EXPRESSION
         '''
     symbol = current_table.lookup_symbol(p[1], p.lineno(1))
-    symbol.value = p[3].value
+    symbol.value = p[3].symbol.value
     if symbol.kind != 'VAR':
       error_handler(f"Cannot assign to non-variable, at line {-1+p.lineno(1)}")
-    if symbol.type and p[3].type != 'UNK' and symbol.type != p[3].type:
+    if symbol.type and p[3].symbol.type != 'UNK' and symbol.type != p[3].symbol.type:
       error_handler(f"Type mismatch, at line {-1+p.lineno(1)}")
     if not symbol.type:
-      symbol.type = p[3].type
+      symbol.type = p[3].symbol.type
 
   def p_if_statement(self, p):
     '''
         IF_STATEMENT : IF NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK
                      | IF NEW_SCOPE LPAREN EXPRESSION RPAREN BLOCK ELSE NEW_SCOPE BLOCK
         '''
-    if p[4].type != 'BOOL' and p[4].type != 'UNK':
+    if p[4].symbol.type != 'BOOL' and p[4].symbol.type != 'UNK':
       error_handler(f"Non-boolean expression found in the if statement, at line {-1+p.lineno(3)}")
-    if p[4].value == False:
+    if p[4].symbol.value == False:
       warning_handler(f"Unreachable code, at line {-1+p.lineno(3)}")
 
   def p_loop(self, p):
@@ -195,11 +198,11 @@ class Parser(object):
              | FOR NEW_SCOPE LPAREN VAR_DECLARATION SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
              | DO NEW_SCOPE BLOCK WHILE LPAREN EXPRESSION RPAREN SEMICOLON
         '''
-    if len(p) == 7 and p[4].type != 'BOOL' and p[4].type != 'UNK':
+    if len(p) == 7 and p[4].symbol.type != 'BOOL' and p[4].symbol.type != 'UNK':
       error_handler(f"Non-boolean expression found in the while loop, at line {-1+p.lineno(3)}")
-    if len(p) == 11  and p[6].type != 'BOOL' and p[6].type != 'UNK':
+    if len(p) == 11  and p[6].symbol.type != 'BOOL' and p[6].symbol.type != 'UNK':
       error_handler(f"Non-boolean expression found in the for loop, at line {-1+p.lineno(7)}")
-    if len(p) == 9 and p[6].type != 'BOOL' and p[6].type != 'UNK':
+    if len(p) == 9 and p[6].symbol.type != 'BOOL' and p[6].symbol.type != 'UNK':
       error_handler(f"Non-boolean expression found in the do while loop, at line {-1+p.lineno(5)}")
 
   def p_function_declaration(self, p):
@@ -249,8 +252,8 @@ class Parser(object):
         SWITCH_STATEMENT : SWITCH LPAREN EXPRESSION RPAREN NEW_SCOPE LBRACE CASE_LIST RBRACE
         '''
     for case in p[7]:
-      if case.kind == 'CASE' and p[3].type!= 'UNK' and case.type != p[3].type:
-        error_handler(f"Non-boolean expression found in the switch statement, at line {case.line}")
+      if case.kind == 'CASE' and p[3].symbol.type!= 'UNK' and case.type != p[3].symbol.type:
+        error_handler(f"Non-boolean expression found in the switch statement, at line {-1+case.line}")
 
   def p_case_list(self, p):
     '''
@@ -268,22 +271,24 @@ class Parser(object):
                     | DEFAULT COLON STATEMENT_LIST
       '''
     if len(p) == 5:
-      symbol_info = {'kind': 'CASE', 'type': p[2].type, 'line': p.lineno(1)}
+      symbol_info = {'kind': 'CASE', 'type': p[2].symbol.type, 'line': p.lineno(1)}
     if len(p) == 4:
       symbol_info = {'kind': 'DEFAULT'}
-    p[0] = Symbol(symbol_info)
+    p[0] = object()
+    p[0].symbol = Symbol(symbol_info)
 
   def p_expression(self, p):
     '''
         EXPRESSION : LOGICAL_EXPR
                    | STRING
         '''
-    p[0]=Symbol({})
-    if not p[1].type:
-      p[0].type = 'STRING'
+    p[0] = object()
+    p[0].symbol = Symbol({})
+    if not p[1].symbol.type:
+      p[0].symbol.type = 'STRING'
     else:
-      p[0].type = p[1].type
-      p[0].value = p[1].value
+      p[0].symbol.type = p[1].symbol.type
+      p[0].symbol.value = p[1].symbol.value
 
   def p_logical_expr(self, p):  # (y<0) and (2*x+1>0) or (x==0)
     '''
@@ -292,46 +297,49 @@ class Parser(object):
                      | NOT COMPARISON_EXPR
                      | NOT COMPARISON_EXPR BINARY_LOGICAL_OPERATOR LOGICAL_EXPR
         '''
-    p[0] = Symbol({})
+    p[0] = object()
+    p[0].symbol = Symbol({})
     if len(p) == 2:
-      p[0].type = p[1].type
-      p[0].value = p[1].value
+      p[0].symbol.type = p[1].symbol.type
+      p[0].symbol.value = p[1].symbol.value
     if len(p) == 4:
-      p[0].type = 'BOOL'
+      p[0].symbol.type = 'BOOL'
     if len(p) == 3:
-      p[0].type = 'BOOL'
+      p[0].symbol.type = 'BOOL'
     if len(p) == 5:
-      p[0].type = 'BOOL'
+      p[0].symbol.type = 'BOOL'
 
   def p_comparison_expr(self, p):  # 2*x+1<2*y+1
     '''
         COMPARISON_EXPR : ADDITIVE_EXPR
                         | ADDITIVE_EXPR COMPARISON_OPERATOR COMPARISON_EXPR
         '''
-    p[0] = Symbol({})
+    p[0] = object()
+    p[0].symbol = Symbol({})
     if len(p) == 2:
-      p[0].type = p[1].type
-      p[0].value = p[1].value
+      p[0].symbol.type = p[1].symbol.type
+      p[0].symbol.value = p[1].symbol.value
     if len(p) == 4:
-      p[0].type = 'BOOL'
+      p[0].symbol.type = 'BOOL'
 
   def p_additive_expr(self, p):  # 5+2*x
       '''
           ADDITIVE_EXPR : MULTIPLICATIVE_EXPR
                         | MULTIPLICATIVE_EXPR ADDITIVE_OPERATOR ADDITIVE_EXPR
           '''
-      p[0] = Symbol({})
+      p[0] = object()
+      p[0].symbol = Symbol({})
       if len(p) == 2:
-          p[0].type = p[1].type
-          p[0].value = p[1].value
+          p[0].symbol.type = p[1].symbol.type
+          p[0].symbol.value = p[1].symbol.value
 
       if len(p) == 4:
           numbers_types = ['INT', 'FLOAT']
-          if p[1].type not in numbers_types or p[3].type not in numbers_types:
+          if p[1].symbol.type not in numbers_types or p[3].symbol.type not in numbers_types:
               error_handler(f"Can't add or subtract non-number types, at line {-1+p.lineno(2)}")
-          p[0].type = 'INT'
-          if p[1].type == 'FLOAT' or p[3].type == 'FLOAT':
-              p[0].type = 'FLOAT'
+          p[0].symbol.type = 'INT'
+          if p[1].symbol.type == 'FLOAT' or p[3].symbol.type == 'FLOAT':
+              p[0].symbol.type = 'FLOAT'
 
   def p_multiplicative_expr(self, p):
     '''
@@ -340,39 +348,40 @@ class Parser(object):
                             | TERM MULTIPLICATIVE_OPERATOR MULTIPLICATIVE_EXPR
         ''' 
 
-    p[0] = Symbol({})
+    p[0] = object()
+    p[0].symbol = Symbol({})
     if len(p) == 2:
-        p[0].type = p[1].type
-        p[0].value = p[1].value
+        p[0].symbol.type = p[1].symbol.type
+        p[0].symbol.value = p[1].symbol.value
 
     if len(p) == 3:
         numbers_types = ['INT', 'FLOAT', 'UNK']
-        if p[2].type not in numbers_types:
+        if p[2].symbol.type not in numbers_types:
           error_handler(f"Can't negate non-number types, at line {-1+p.lineno(1)}")
-        p[0].type = p[2].type
+        p[0].symbol.type = p[2].symbol.type
 
     if len(p) == 4:
-        if p[2].type == 'UNK' or p[3].type == 'UNK':
-          p[0].type = 'UNK'
+        if p[2].symbol.type == 'UNK' or p[3].symbol.type == 'UNK':
+          p[0].symbol.type = 'UNK'
         else:
           numbers_types = ['INT', 'FLOAT']
-          if p[1].type not in numbers_types or p[3].type not in numbers_types:
+          if p[1].symbol.type not in numbers_types or p[3].symbol.type not in numbers_types:
               error_handler(f"Can't multiple, divide or mod non-number types, at line {-1+p.lineno(2)}")
-          p[0].type = 'INT'
+          p[0].symbol.type = 'INT'
 
           if p[2]=='/':
-            p[0].type = 'FLOAT'
+            p[0].symbol.type = 'FLOAT'
 
-          if p[1].type == 'FLOAT' or p[3].type == 'FLOAT':
-              p[0].type = 'FLOAT'
+          if p[1].symbol.type == 'FLOAT' or p[3].symbol.type == 'FLOAT':
+              p[0].symbol.type = 'FLOAT'
 
           if p[2] == '%':
-              if p[1].type != 'INT' or p[3].type != 'INT':
+              if p[1].symbol.type != 'INT' or p[3].symbol.type != 'INT':
                   error_handler(f"Can't mod non-integer types, at line {-1+p.lineno(2)}")
-              p[0].type = 'INT'
+              p[0].symbol.type = 'INT'
 
           elif p[2] == '//':
-              p[0].type = 'INT'
+              p[0].symbol.type = 'INT'
 
   def p_term(self, p):  # x
     '''
@@ -383,29 +392,30 @@ class Parser(object):
              | TRUE
              | FALSE
         '''
-    p[0] = Symbol({})
+    p[0] = object()
+    p[0].symbol = Symbol({})
     if len(p) == 4:
-        p[0].type = p[2].type
+        p[0].symbol.type = p[2].symbol.type
 
     if len(p) == 2:
         if p[1] == 'True':
-            p[0].type = 'BOOL'
+            p[0].symbol.type = 'BOOL'
 
         elif p[1] == 'False':
-            p[0].type = 'BOOL'
-            p[0].value = False
+            p[0].symbol.type = 'BOOL'
+            p[0].symbol.value = False
 
         elif type(p[1]) == str:
             symbol = current_table.lookup_symbol(p[1], p.lineno(1))
-            p[0].type = symbol.type
-            p[0].value = symbol.value
+            p[0].symbol.type = symbol.type
+            p[0].symbol.value = symbol.value
 
         else:
             # check if int or float by checking if there is a decimal point
             if type(p[1]) == float:
-                p[0].type = 'FLOAT'
+                p[0].symbol.type = 'FLOAT'
             else:
-                p[0].type = 'INT'
+                p[0].symbol.type = 'INT'
 
   def p_function_call(self, p):
     '''
@@ -415,7 +425,8 @@ class Parser(object):
     if len(symbol.params) != len(p[3]):
       error_handler(f"Length mismatch in function call, at line {-1+p.lineno(1)}")
     symbol_info = {'name': p[1], 'kind': 'FUNCTION', 'type': symbol.type, 'params': p[3], 'line': p.lineno(1)}
-    p[0] = Symbol(symbol_info)
+    p[0] = object()
+    p[0].symbol = Symbol(symbol_info)
 
   def p_argument_list(self, p):
     '''
@@ -472,15 +483,10 @@ class Parser(object):
     '''
         BREAK_STATEMENT : BREAK SEMICOLON
         '''
-    
-    
-    # if the previous toke is a float and the current toke is MOD or INT_DIVIDE then raise an error (TODO:)
-    
 
 
   def p_error(self, p):
-    print("Syntax error in input!")
-    #print(p)
+    print("Syntax error")
 
   def __init__(self):
     self.lexer = Lexer()
@@ -494,8 +500,8 @@ if __name__ == "__main__":
   code = \
 """
 var x = False;
-var y = x;
 y = True;
+var y = x;
 """
   parse = P.parser.parse(code)
 
