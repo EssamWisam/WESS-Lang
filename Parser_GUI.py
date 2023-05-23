@@ -73,6 +73,17 @@ class SymbolTable:
         child = SymbolTable()
         child.parent = self
         return child
+    
+    #make a json object of the symbol table that has name, kind, type 
+    def return_table(self):
+        table = {}
+        for key in self.symbols:
+            table[key] = {}
+            table[key]['kind'] = self.symbols[key].kind
+            table[key]['type'] = self.symbols[key].type
+            table[key]['value'] = self.symbols[key].value
+        return table
+    
 
 current_table = SymbolTable()
 output_result = []
@@ -498,6 +509,7 @@ class Parser(object):
   def __init__(self):
     self.lexer = Lexer()
     self.parser = yacc.yacc(module=self)
+    
 P = Parser()
 success = True
 def parse_gui(code):
@@ -512,14 +524,11 @@ def parse_gui(code):
       warning_handler(f"Variable {symbol.name} declared but not used, at line {symbol.line}")
   if success:
     output_result.append("Compiled Successfully")
-  print("In parser",output_result)
-  return output_result
+
+  return output_result, current_table.return_table()
 
 
 print(parse_gui(
     """
-  var x = 5;
-  var y;
-  z = y + 3;
-  """
+    """
   ))

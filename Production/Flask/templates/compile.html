@@ -39,6 +39,20 @@
         {% endif %}
       </div>
 
+       <div class="output">
+        {% if table %}
+        <span>
+          <ul>
+            {% for key in table %}
+            <li>{{ key }} : {{ table[key]['kind'] }} : {{ table[key]['type'] }}</li>
+            {% endfor %}
+        </ul> 
+        </span>
+        {% else %}
+        <p id="loading">Hold tight. We're working hard to give you the best results!</p>
+        {% endif %}
+      </div>
+
     </div>
 
     <!-- ... -->
@@ -86,8 +100,9 @@ document.getElementById("upload-form").addEventListener("submit", function(event
   .then(text => {
     console.log("Form submitted successfully:", text);
     // repalce the current page with the page from the response
-    document.open();
     document.write(text);
+    //remove the old output
+    document.getElementsByClassName("output")[0].remove();
   })
   .catch(error => {
     console.error("Error submitting the form:", error);

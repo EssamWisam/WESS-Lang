@@ -30,10 +30,9 @@ def compile_page():
     Defines what the browser should do when a post request (e.g. upload) is done on /compile 
     '''
     if request.method == 'POST':
-        messages_arr=parse_gui(request.form['code'])
+        messages_arr,table=parse_gui(request.form['code'])
         print(messages_arr)
-        
-        return render_template('compile.html', err_msg='', show_img=False, messages=messages_arr, code=request.form['code'])
+        return render_template('compile.html', err_msg='', show_img=False, messages=messages_arr, code=request.form['code'], table=table)
 
 
 if __name__ == '__main__':
