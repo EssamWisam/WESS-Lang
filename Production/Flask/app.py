@@ -3,7 +3,7 @@ import sys
 import time
 import os
 from flask import Flask, render_template, request
-sys.path.append('')
+sys.path.append('../../')
 from Parser_GUI import parse_gui
 app = Flask(__name__)
 

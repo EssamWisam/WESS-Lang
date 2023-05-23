@@ -92,6 +92,7 @@ class Parser(object):
         FBLOCK : LBRACE STATEMENT_LIST RBRACE
                | LBRACE RBRACE'''
   
+  
   ### ADDED RULE
   def p_pop(self, p):
     '''
@@ -171,16 +172,25 @@ class Parser(object):
         '''
     
     # Only add a register for the second identifier (in case its used further)
-    if len(p) == 6:
-      self.Quadruples.append(Quadruple(op=None, arg1=p[5], arg2=None))
+    if len(p) == 5:
+      self.Quadruples.append(Quadruple(op=None, arg1=p[4], arg2=None))
     if len(p) == 4:
       self.Quadruples.append(Quadruple(op=None, arg1="undefined", arg2=None))
     
-    # todo: need to do symbol table stuff here special to enums!
+    # Todo: need to do symbol table stuff here special to enums!
     # for example, check that the last identifier in the first rule is in the enum list already; 
     # and belongs to the same enum type
+
+  def p_assignment(self, p):
+    '''
+        ASSIGNMENT : IDENTIFIER ASSIGN EXPRESSION
+        '''
+    self.Quadruples.append(Quadruple(op=None, arg1=p[3].reg, arg2=None))
+    p[0] = object()
+    p[0].reg = p[1]
+    # Todo: add the assigned register to the symbol table
      
-    
+  ########## SKIP
   ### MODIFIED RULE
   def p_function_declaration(self, p):
     '''
@@ -188,20 +198,6 @@ class Parser(object):
         '''
     
     ## TODO add the function's label to the symbol table (perhaps) 
-
-  ### ADDED RULE
-  def p_label(self, p):
-    '''
-        LBL : epsilon
-        '''
-    self.Quadruples.append(Label(p[-4]))
-
-  ### ADDED RULE
-  def p_PUSH(self, p):
-      '''
-          PUSH : epsilon
-          '''
-      self.Quadruples.append("PUSH IPC")
 
 
 
@@ -240,15 +236,7 @@ class Parser(object):
     self.Quadruples.append(f"arg {p[1].reg}")
     self.arg_counter += 1
     
-  def p_assignment(self, p):
-    '''
-        ASSIGNMENT : IDENTIFIER ASSIGN EXPRESSION
-        '''
-    self.Quadruples.append(Quadruple(op=None, arg1=p[3].reg, arg2=None))
-    p[0] = object()
-    p[0].reg = p[1]
-    # Todo: add the assigned register to the symbol table
-    
+
   ### Modified
   def p_if_statement(self, p):
     '''
@@ -763,7 +751,7 @@ if __name__ == "__main__":
       }
     }
     """
-  root = P.parser.parse(exprs)  # returns the value of the root node
+  root = P.parser.parse(code_funcs)  # returns the value of the root node
 
 
   for i in P.Quadruples:
