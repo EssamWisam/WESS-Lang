@@ -35,7 +35,7 @@ def error_handler(error):
   success = False
   error = f"Error: {error}"
   output_result.append(error)
-  P.parser.restart()
+  raise SyntaxError ("invalid thing")
 
 def warning_handler(warning):
   warning = f"Warning: {warning}"
@@ -175,6 +175,7 @@ class Parser(object):
     '''
         ASSIGNMENT : IDENTIFIER ASSIGN EXPRESSION
         '''
+    print(p.lineno(1))
     symbol = current_table.lookup_symbol(p[1], p.lineno(1))
     symbol.value = p[3].symbol.value
     if symbol.kind != 'VAR':
@@ -339,6 +340,7 @@ class Parser(object):
       if len(p) == 4:
           numbers_types = ['INT', 'FLOAT']
           if p[1].symbol.type not in numbers_types or p[3].symbol.type not in numbers_types:
+              print(p.lineno(2))
               error_handler(f"Can't add or subtract non-number types, at line {p.lineno(2)}")
           p[0].symbol.type = 'INT'
           if p[1].symbol.type == 'FLOAT' or p[3].symbol.type == 'FLOAT':
@@ -504,7 +506,6 @@ def parse_gui(code):
   current_table = SymbolTable()
   output_result = []
   P = Parser()
-  print("In parser",code)
   parse = P.parser.parse(code)
   for symbol in current_table.symbols.values():
     if (symbol.kind == 'VAR' or symbol.kind == 'CONST') and symbol.used == False:
@@ -513,3 +514,12 @@ def parse_gui(code):
     output_result.append("Compiled Successfully")
   print("In parser",output_result)
   return output_result
+
+
+print(parse_gui(
+    """
+  var x = 5;
+  var y;
+  z = y + 3;
+  """
+  ))
