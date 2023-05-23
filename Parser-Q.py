@@ -49,7 +49,8 @@ class Parser(object):
   tokens = Lexer.tokens
   Quadruples = []
   arg_counter = 0
-  
+  Q_len = 0
+  Q2_len = 0
   ### Top-level rules
   def p_program(self, p):  
     '''
@@ -277,18 +278,127 @@ class Parser(object):
     self.Quadruples.append(p[-5].label)
 
 
+  ### Modified
+  ### todo: use the same register for the while condition using the symbol table 
   def p_loop(self, p):
     '''
-        LOOP : WHILE LPAREN EXPRESSION RPAREN BLOCK
-             | FOR LPAREN ASSIGNMENT SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
-             | FOR LPAREN VAR_DECLARATION SEMICOLON EXPRESSION SEMICOLON ASSIGNMENT RPAREN BLOCK
-             | DO BLOCK WHILE LPAREN EXPRESSION RPAREN SEMICOLON
+        LOOP : WHILE_LBL_2 WHILE LPAREN EXPRESSION JMPF_WHILE_1 RPAREN BLOCK JMP_WHILE_2 WHILE_LBL_1
+             | FOR LPAREN ASSIGNMENT SEMICOLON EXPRESSION SEMICOLON SPY1 ASSIGNMENT RPAREN SPY2 BLOCK 
+             | FOR LPAREN VAR_DECLARATION SEMICOLON EXPRESSION SEMICOLON SPY1 ASSIGNMENT RPAREN SPY2 BLOCK
+             | WHILE_LBL_2 DO BLOCK WHILE LPAREN EXPRESSION RPAREN SEMICOLON JMPT_WHILE
         '''
+    if p.slice[1].value == 'for':
+      num_new = len(self.Quadruples) - self.Q_len
+      block_instructions = self.Quadruples[-num_new:]
+      self.Quadruples = self.Quadruples[:-num_new]
+      
+      num_of_assignments_quadruples = self.Q_len - self.Q2_len
+      new_assignments = self.Quadruples[-num_of_assignments_quadruples:]
+      self.Quadruples = self.Quadruples[:-num_of_assignments_quadruples]
+      
+      lbl1, lbl2 = Label(), Label()
+      self.Quadruples.append(lbl1)
+      self.Quadruples.append(f"JMPF {p[5].reg} {lbl2}")
+      
+      self.Quadruples.extend(block_instructions)
+      
+      self.Quadruples.extend(new_assignments)
+      
+      self.Quadruples.append(f"JMP {lbl1}")
+      self.Quadruples.append(lbl2)
+      #for inst in block_instructions:
+      #    print(inst)
+    
+    
+    '''
+    for (var x = 0; x < 10; x = x + 1) {
+      var x = 5;
+      var y = 4;
+    }
+    
+    var x = 0;
+    while (x < 10) {
+      var x = 5;
+      var y = 7;
+      x = x + 1;
+      }
+      
+      var x = 0; <<<
+      t2 = x < 10 <<<
+      L1:
+      JMPF t2 L2
+      x = x + 1; <<<
+      var x = 5; <<<
+      var y = 7; <<<
+      JMP L1
+      L2:
 
+    '''
+
+  
+  ### Added1
+  def p_SPY_1(self, p):
+    '''
+        SPY1 : epsilon
+        '''
+    self.Q2_len = len(self.Quadruples)
+
+  ### Added
+  def p_SPY_2(self, p):
+    '''
+        SPY2 : epsilon
+        '''
+    self.Q_len = len(self.Quadruples)
+  
+  ### Added
+  def p_while_lbl_1(self, p):
+    '''
+        WHILE_LBL_1 : epsilon
+        '''
+    self.Quadruples.append(p[-4].label)
+
+  ### Added
+  def p_while_lbl_2(self, p):
+    '''
+        WHILE_LBL_2 : epsilon
+        '''
+    p[0] = object()
+    p[0].label = Label()
+    self.Quadruples.append(p[0].label)
+    
+  ### Added
+  def p_while_jmpf(self, p):
+    '''
+        JMPF_WHILE_1 : epsilon
+        '''
+    p[0] = object()
+    p[0].label = Label()
+    self.Quadruples.append(f"JMPF {p[-1].reg} {p[0].label}")
+    
+  ### Added
+  def p_while_jmp(self, p):
+    '''
+        JMP_WHILE_2 : epsilon
+        '''    
+    self.Quadruples.append(f"JMP {p[-7].label}")
+    
+    
+  ### Added
+  def p_while_jmpt(self, p):
+    '''
+        JMPT_WHILE : epsilon
+        '''
+    p[0] = object()
+    p[0].label = Label()
+    self.Quadruples.append(f"JMPT {p[-3].reg} {p[-8].label}")
+    
+    
+  ### Canceled 
   def p_continue_statement(self, p):
     '''
         CONTINUE_STATEMENT : CONTINUE SEMICOLON
         '''
+  ### Canceled
   def p_break_statement(self, p):
     '''
         BREAK_STATEMENT : BREAK SEMICOLON
@@ -519,11 +629,32 @@ if __name__ == "__main__":
         
         
   """
-  root = P.parser.parse(code_ifs)  # returns the value of the root node
+  
+  
+  
+  code_whiles = \
+    """
+    #while (x > 5 and x < 10) {
+    #  var x = 3;
+    #}
+    
+    #do {
+    #  var x = 5;
+    #  var y = 6;
+    #}
+    #while(x > 5 and x < 10);
+    
+    for (var x=0; x<10; x=x+1){
+      y =5;
+      z =4;
+    }
+    
+    """
+  root = P.parser.parse(code_whiles)  # returns the value of the root node
 
 
   for i in P.Quadruples:
-    print(i)
+   print(i)
 
 
 
