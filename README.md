@@ -301,15 +301,14 @@ var x;
 x = factorial(5);
 ```
 
-## Contrinutors
-- Ahmed Waleed
-- Essam Wisam
-- Mohamed Saad
-- Mohamed Salama
+## 👥 Collaborators
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
 
+<h2 align="center"> 💖 Thank you. 💖 </h2>
 
 
 
